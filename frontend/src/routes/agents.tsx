@@ -220,7 +220,7 @@ function AgentsDashboard() {
                   className="flex-1 py-2 bg-transparent text-sm text-foreground focus-visible:outline-none placeholder:text-muted-foreground"
                 />
                 <button
-                  onClick={handleSend}
+                  onClick={() => handleSend()}
                   disabled={chatLoading || !input.trim()}
                   className="px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-xs font-medium disabled:opacity-40 hover:bg-primary/90 transition-colors"
                 >
