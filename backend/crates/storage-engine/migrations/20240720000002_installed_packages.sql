@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS installed_packages (
+    package_id VARCHAR PRIMARY KEY,
+    install_state VARCHAR NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

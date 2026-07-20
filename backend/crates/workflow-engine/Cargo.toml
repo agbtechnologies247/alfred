@@ -1,0 +1,17 @@
+[package]
+name = "workflow-engine"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+sqlx = { workspace = true }
+uuid = { workspace = true }
+async-trait = "0.1"
+
+# Internal
+storage-engine = { path = "../storage-engine" }
+event-bus = { path = "../event-bus" }

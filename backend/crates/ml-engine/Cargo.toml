@@ -1,0 +1,13 @@
+[package]
+name = "ml-engine"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+storage-engine = { path = "../storage-engine" }
+tract-onnx = "0.21.0"
+ts-rs = { workspace = true }

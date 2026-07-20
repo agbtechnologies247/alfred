@@ -1,0 +1,10 @@
+[package]
+name = "crc-engine"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tracing.workspace = true
+event-bus = { path = "../event-bus" }
+serde.workspace = true
+serde_json.workspace = true

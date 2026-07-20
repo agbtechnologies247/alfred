@@ -1,0 +1,15 @@
+[package]
+name = "simulation-engine"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+storage-engine = { path = "../storage-engine" }
+ontology-engine = { path = "../ontology-engine" }
+ml-engine = { path = "../ml-engine" }
+sqlx.workspace = true
+reqwest.workspace = true

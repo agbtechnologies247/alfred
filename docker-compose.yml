@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: alfred_postgres
+    environment:
+      POSTGRES_USER: alfred
+      POSTGRES_PASSWORD: alfredpassword
+      POSTGRES_DB: alfred_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  neo4j:
+    image: neo4j:5.12-community
+    container_name: alfred_neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: neo4j/alfredpassword
+    volumes:
+      - neo4jdata:/data
+
+  api-gateway:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: alfred_api_gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgres://alfred:alfredpassword@postgres:5432/alfred_db
+      - NEO4J_URL=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASS=alfredpassword
+      - REDIS_URL=redis://redis:6379
+      - OPENAI_API_KEY=sk-proj-placeholder-replace-with-real-key-in-prod
+      - SLACK_WEBHOOK_URL=https://hooks.slack.com/services/mock/webhook/url
+      - PAGERDUTY_ROUTING_KEY=mock_pagerduty_routing_key_123
+    depends_on:
+      - postgres
+      - neo4j
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: alfred_redis
+    ports:
+      - "6379:6379"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: alfred_frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - api-gateway
+
+  monitor-agent:
+    build:
+      context: ./monitor-agent
+      dockerfile: Dockerfile
+    container_name: alfred_monitor_agent
+    environment:
+      - TELEMETRY_URL=http://api-gateway:3000/telemetry
+    depends_on:
+      - api-gateway
+
+volumes:
+  pgdata:
+  neo4jdata:

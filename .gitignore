@@ -1,0 +1,39 @@
+# Rust
+/backend/target/
+/backend/target_manual/
+/backend/target-cli/
+/target/
+**/*.rs.bk
+
+# Node / JS / TS
+node_modules/
+.pnpm-store/
+dist/
+dist-ssr/
+*.local
+
+# System / IDEs
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+# Databases & Volumes
+pgdata/
+neo4jdata/
+
+# Environment Secrets
+.env
+.env*.local
+
+# Executables
+*.exe
+*.dll
+*.pdb
+*.so
+*.dylib

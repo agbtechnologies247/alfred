@@ -1,0 +1,12 @@
+{
+  "name": "@alfred/monitor-agent",
+  "version": "1.0.0",
+  "description": "Dummy agent to send telemetry to A.L.F.R.E.D backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}

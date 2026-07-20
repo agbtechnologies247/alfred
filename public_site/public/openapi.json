@@ -1,0 +1,245 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "A.L.F.R.E.D. Decision Engineering Platform API",
+    "version": "0.1.0",
+    "description": "The complete REST API for the A.L.F.R.E.D. platform — covering incident management, knowledge graph topology, ML predictions, marketplace, decision simulation, and enterprise governance.",
+    "contact": {
+      "name": "A.L.F.R.E.D. Platform",
+      "url": "http://localhost:5174"
+    },
+    "license": {
+      "name": "Enterprise License"
+    }
+  },
+  "servers": [
+    { "url": "http://localhost:3000", "description": "Local Development" }
+  ],
+  "tags": [
+    { "name": "Platform", "description": "Health and platform status" },
+    { "name": "Monitoring", "description": "KPIs, telemetry and network errors" },
+    { "name": "Incidents", "description": "Incident lifecycle management" },
+    { "name": "Knowledge Graph", "description": "Topology and impact radius (Phase 2)" },
+    { "name": "ML Engine", "description": "Failure prediction and capacity forecasting (Phase 3)" },
+    { "name": "Feedback", "description": "Human RLHF feedback loop (Phase 3)" },
+    { "name": "Marketplace", "description": "AI Agents, Automations and Connectors (Phase 4)" },
+    { "name": "Decisions", "description": "Decision Engineering and simulation (Phase 5)" },
+    { "name": "Governance", "description": "RBAC, audit trail and multi-tenancy (Phase 6)" },
+    { "name": "Developer API", "description": "External integration endpoints" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Platform"],
+        "summary": "Platform health check",
+        "description": "Returns the health status and list of active phases.",
+        "responses": {
+          "200": {
+            "description": "Platform is healthy",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "healthy",
+                  "service": "A.L.F.R.E.D. Decision Engineering Platform",
+                  "version": "0.1.0",
+                  "phases_active": ["workflow-engine", "ai-gateway", "ontology-engine"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/monitoring/kpis": {
+      "get": {
+        "tags": ["Monitoring"],
+        "summary": "Get platform KPIs",
+        "responses": {
+          "200": {
+            "description": "Key performance indicators",
+            "content": {
+              "application/json": {
+                "example": {
+                  "health_score": 99.98,
+                  "critical_alerts": 3,
+                  "open_incidents": 18,
+                  "automation_success": 97.0
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/incidents": {
+      "get": {
+        "tags": ["Incidents"],
+        "summary": "List all incidents",
+        "responses": { "200": { "description": "Array of incidents" } }
+      }
+    },
+    "/api/incidents/metrics": {
+      "get": {
+        "tags": ["Incidents"],
+        "summary": "Incident metrics summary",
+        "responses": { "200": { "description": "P1 count, MTTR, resolution stats" } }
+      }
+    },
+    "/api/topology/{id}": {
+      "get": {
+        "tags": ["Knowledge Graph"],
+        "summary": "Get entity topology graph",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "example": "api-gw-prod" }],
+        "responses": { "200": { "description": "Nodes and edges of the knowledge graph around this entity" } }
+      }
+    },
+    "/api/topology/{id}/impact": {
+      "get": {
+        "tags": ["Knowledge Graph"],
+        "summary": "Get impact radius for entity failure",
+        "description": "Returns all downstream entities affected if this entity fails, with risk score and estimated customer impact.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Impact radius analysis" } }
+      }
+    },
+    "/api/ml/predict/failure": {
+      "post": {
+        "tags": ["ML Engine"],
+        "summary": "Predict entity failure probability",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "properties": { "entity_id": { "type": "string" } } },
+              "example": { "entity_id": "db-postgres-prod" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Failure prediction with probability and confidence" } }
+      }
+    },
+    "/api/ml/predict/capacity": {
+      "post": {
+        "tags": ["ML Engine"],
+        "summary": "Forecast resource capacity",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": { "resource_id": "orders-db", "current_usage_pct": 78.5 }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Days to capacity threshold with recommendation" } }
+      }
+    },
+    "/api/feedback": {
+      "post": {
+        "tags": ["Feedback"],
+        "summary": "Submit human feedback on an AI decision",
+        "description": "Every approval or rejection is stored and fed back into the ML model to improve future recommendations.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "decision_id": "DEC-901",
+                "user_id": "sre-alice",
+                "user_role": "sr_engineer",
+                "action_type": "restart_service",
+                "recommendation": "Restart connection pool",
+                "ai_confidence": 0.92,
+                "decision": "approved",
+                "environment": "production"
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Feedback recorded" } }
+      }
+    },
+    "/api/marketplace/packages/agents": {
+      "get": {
+        "tags": ["Marketplace"],
+        "summary": "List available AI Agent packages",
+        "responses": { "200": { "description": "Array of AI Agent manifests" } }
+      }
+    },
+    "/api/marketplace/packages/{id}/install": {
+      "post": {
+        "tags": ["Marketplace"],
+        "summary": "Install a marketplace package",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "example": "agent-finops" }],
+        "responses": { "200": { "description": "Package installed" } }
+      }
+    },
+    "/api/decisions/simulate": {
+      "post": {
+        "tags": ["Decisions"],
+        "summary": "Simulate action impact before executing",
+        "description": "The Decision Engineering engine computes blast radius, SLA breach probability, cost impact, and alternatives BEFORE any action is taken.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "action_type": "restart_service",
+                "target_entity_id": "api-gw-prod",
+                "payload": { "graceful": true }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Full simulation result with risk score and alternatives" } }
+      }
+    },
+    "/api/governance/audit": {
+      "get": {
+        "tags": ["Governance"],
+        "summary": "Get the immutable audit trail",
+        "responses": { "200": { "description": "Last 50 audit entries" } }
+      }
+    },
+    "/api/governance/roles": {
+      "get": {
+        "tags": ["Governance"],
+        "summary": "List all RBAC roles and permissions",
+        "responses": { "200": { "description": "Array of roles with permission scopes" } }
+      }
+    },
+    "/api/api/v1/incidents": {
+      "post": {
+        "tags": ["Developer API"],
+        "summary": "Create an incident via API",
+        "description": "Requires Bearer token with `incident.write` scope.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": { "title": "High CPU on prod-server-01", "priority": "P2", "source": "CloudWatch" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Incident created and event dispatched" },
+          "401": { "description": "Unauthorized — missing or invalid token" }
+        }
+      }
+    },
+    "/api/api/v1/ai/rca": {
+      "post": {
+        "tags": ["Developer API"],
+        "summary": "Generate AI Root Cause Analysis tags",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": { "description": "API latency spiked to 4s on /payments endpoint" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "RCA tags and confidence score" } }
+      }
+    }
+  }
+}

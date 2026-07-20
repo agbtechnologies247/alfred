@@ -1,0 +1,44 @@
+[package]
+name = "api-gateway"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tower-http = { version = "0.5", features = ["cors"] }
+tower_governor = "0.4.2"
+monitor-core = { path = "../monitor-core" }
+event-bus = { path = "../event-bus" }
+config-engine = { path = "../config-engine" }
+storage-engine = { path = "../storage-engine" }
+decision-engine = { path = "../decision-engine" }
+knowledge-engine = { path = "../knowledge-engine" }
+workflow-engine = { path = "../workflow-engine" }
+ai-gateway = { path = "../ai-gateway" }
+ontology-engine = { path = "../ontology-engine" }
+ml-engine = { path = "../ml-engine" }
+feedback-engine = { path = "../feedback-engine" }
+registry-service = { path = "../registry-service" }
+simulation-engine = { path = "../simulation-engine" }
+governance-engine = { path = "../governance-engine" }
+dns-engine = { path = "../dns-engine" }
+latency-engine = { path = "../latency-engine" }
+packet-engine = { path = "../packet-engine" }
+crc-engine = { path = "../crc-engine" }
+alert-engine = { path = "../alert-engine" }
+people-engine = { path = "../people-engine" }
+serde.workspace = true
+serde_json.workspace = true
+reqwest.workspace = true
+sqlx.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+neo4rs.workspace = true
+argon2 = "0.5"
+prometheus = "0.13"
+lazy_static = "1.4"
+blake2.workspace = true
+sysinfo.workspace = true

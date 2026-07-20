@@ -1,0 +1,7 @@
+[build]
+jobs = 1
+
+[profile.dev]
+codegen-units = 1
+split-debuginfo = "off"
+

@@ -1,0 +1,15 @@
+[package]
+name = "knowledge-engine"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tracing.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+sqlx.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+storage-engine = { path = "../storage-engine" }
+event-bus = { path = "../event-bus" }
