@@ -108,7 +108,9 @@ export interface PeopleInsights {
   details: string;
 }
 
-const API_BASE = 'http://127.0.0.1:3000/api';
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://127.0.0.1:3000/api'
+  : `${window.location.origin}/api`;
 
 
 // Local storage helpers to provide robust in-memory mock CRUD behavior when DB is missing
@@ -628,7 +630,7 @@ export const api = {
       console.log(`%c[A.L.F.R.E.D. API Request] %cDELETE /developer/webhooks/${id}`, 'color: #06b6d4; font-weight: bold', 'color: #e11d48; font-weight: bold');
       try {
         const token = localStorage.getItem('alfred_token') || 'sk_test_xxxxx';
-        const res = await fetch(`http://localhost:3000/api/developer/webhooks/${id}`, {
+        const res = await fetch(`${API_BASE}/developer/webhooks/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`

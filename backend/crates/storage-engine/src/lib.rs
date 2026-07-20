@@ -30,13 +30,27 @@ impl StorageEngine {
         .execute(&pg)
         .await?;
 
-        // Seed default User: admin / alfredpassword
+        // Seed default admin User: admin / alfredpassword
+        // Password hash: argon2id of 'alfredpassword'
+        let admin_pass_hash = "$argon2id$v=19$m=102400,t=2,p=8$YRDdQCnsbc1WTSXYLCW6ow$mn/gPmtc4zpGQpdf7HukVg";
         let admin_id = uuid::Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap();
         sqlx::query(
-            "INSERT INTO users (id, tenant_id, username, password_hash, role) VALUES ($1, $2, 'admin', 'alfredpassword', 'super_admin') ON CONFLICT (username) DO NOTHING"
+            "INSERT INTO users (id, tenant_id, username, password_hash, role) VALUES ($1, $2, 'admin', $3, 'super_admin') ON CONFLICT (username) DO NOTHING"
         )
         .bind(admin_id)
         .bind(default_tenant_id)
+        .bind(admin_pass_hash)
+        .execute(&pg)
+        .await?;
+
+        // Seed demo user: demo / alfredpassword
+        let demo_id = uuid::Uuid::parse_str("33333333-3333-3333-3333-333333333333").unwrap();
+        sqlx::query(
+            "INSERT INTO users (id, tenant_id, username, password_hash, role) VALUES ($1, $2, 'demo', $3, 'sr_engineer') ON CONFLICT (username) DO NOTHING"
+        )
+        .bind(demo_id)
+        .bind(default_tenant_id)
+        .bind(admin_pass_hash)
         .execute(&pg)
         .await?;
 

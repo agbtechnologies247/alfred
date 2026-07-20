@@ -51,5 +51,3 @@ async fn test_auth_failure_invalid_token() {
             println!("Server not running, skipping auth failure test. Error: {}", e);
         }
     }
-}
-

@@ -21,7 +21,10 @@ export function Layout() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:3000/api/auth/login', {
+      const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://127.0.0.1:3000'
+        : window.location.origin;
+      const response = await fetch(`${apiBase}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -135,6 +138,34 @@ export function Layout() {
               )}
             </button>
           </form>
+
+          {/* Demo Credentials Banner */}
+          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs">
+            <p className="font-bold text-primary mb-1.5 flex items-center gap-1.5">
+              <span>🎯</span> Try A.L.F.R.E.D. — Demo Access
+            </p>
+            <div className="space-y-1 text-slate-300">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Username</span>
+                <button
+                  type="button"
+                  onClick={() => { setUsername('demo'); setPassword('alfredpassword'); }}
+                  className="font-mono text-primary hover:underline cursor-pointer"
+                >demo</button>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Password</span>
+                <span className="font-mono text-slate-300">alfredpassword</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setUsername('demo'); setPassword('alfredpassword'); }}
+              className="mt-2 w-full text-center text-[10px] text-primary/70 hover:text-primary transition-colors"
+            >
+              Click to auto-fill →
+            </button>
+          </div>
 
           {/* Footer Info */}
           <div className="text-center text-[10px] text-muted-foreground border-t border-white/5 pt-4">

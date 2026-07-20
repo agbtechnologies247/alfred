@@ -219,7 +219,7 @@ export default function Home() {
           </p>
 
           <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="btn btn-primary" style={{ padding: '16px 32px', fontSize: '1.05rem' }} onClick={() => window.location.href = 'http://localhost:5174/'}>
+            <button className="btn btn-primary" style={{ padding: '16px 32px', fontSize: '1.05rem' }} onClick={() => window.location.href = 'https://alfred.agbtechnologies.in/'}>
               Launch Console <ArrowRight size={18} style={{ marginLeft: '10px' }}/>
             </button>
             <a href="/pricing" className="btn btn-outline" style={{ padding: '16px 32px', fontSize: '1.05rem' }}>
