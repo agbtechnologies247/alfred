@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Bot, MessageSquare, Network, Shield, Zap, Cloud, Database,
   Activity, Package, CheckCircle, RefreshCw, Terminal, Plus
@@ -35,14 +35,21 @@ function AgentsDashboard() {
     '[07:00:08] Security Agent: IAM policy scan initiated (142 policies)',
   ]);
 
-  const handleSend = async () => {
-    if (!input.trim() || chatLoading) return;
-    const msg = input.trim();
+  // Default-select first agent
+  useEffect(() => {
+    if (agents && agents.length > 0 && !selectedAgent) {
+      setSelectedAgent(agents[0]);
+    }
+  }, [agents, selectedAgent]);
+
+  const handleSend = async (customMsg?: string) => {
+    const msg = (customMsg || input).trim();
+    if (!msg || chatLoading) return;
     setInput('');
     setMessages(prev => [...prev, { text: msg, sender: 'me', ts: new Date().toLocaleTimeString() }]);
     setChatLoading(true);
     try {
-      const data = await api.agents.chat(msg);
+      const data = await api.agents.chat(msg, selectedAgent?.id);
       setMessages(prev => [...prev, {
         text: data.response ?? data.message ?? JSON.stringify(data),
         sender: 'agent',
@@ -157,11 +164,16 @@ function AgentsDashboard() {
               {messages.length === 0 && (
                 <div className="text-center mt-8">
                   <Bot className="w-10 h-10 mx-auto text-muted-foreground/40 mb-3" />
-                  <p className="text-sm text-muted-foreground">Ask the agent anything — incidents, workflows, recommendations.</p>
+                  <p className="text-sm text-muted-foreground">Ask {selectedAgent?.name || 'the agent'} anything — incidents, workflows, recommendations.</p>
                   <div className="flex flex-wrap gap-2 justify-center mt-4">
-                    {['What P1 incidents are open?', 'Scale the API gateway', 'Show me FinOps savings'].map(s => (
-                      <button key={s} onClick={() => setInput(s)}
-                        className="text-xs px-3 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 transition-colors">
+                    {(selectedAgent?.id === 'AG-2'
+                      ? ['What P1 incidents are open?', 'Rollback CoreDNS with SOP-14', 'Show me SRE hours savings']
+                      : selectedAgent?.id === 'AG-3'
+                      ? ['Scan IAM security policies', 'SOC2 compliance role scan', 'Vulnerability check on CoreDNS']
+                      : ['Check edge router latency', 'Status of packet transmission', 'Firewall policy MTU anomalies']
+                    ).map(s => (
+                      <button key={s} type="button" onClick={() => handleSend(s)}
+                        className="text-xs px-3 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/5 text-cyan-400 hover:bg-cyan-500/10 transition-colors cursor-pointer">
                         {s}
                       </button>
                     ))}

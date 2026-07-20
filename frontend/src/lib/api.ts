@@ -536,7 +536,7 @@ export const api = {
   },
   agents: {
     getAll: () => fetcher<any[]>('/agents'),
-    chat: (message: string) => post('/agents/chat', { message }),
+    chat: (message: string, agent_id?: string) => post('/agents/chat', { message, agent_id }),
   },
   analytics: {
     get: () => fetcher<any>('/analytics'),

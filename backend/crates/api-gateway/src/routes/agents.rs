@@ -20,7 +20,7 @@ pub async fn agent_chat(
     let agent_id = payload.get("agent_id").and_then(|v| v.as_str()).unwrap_or("AG-1");
 
     let api_key = &state.config.openai_key;
-    let is_placeholder = api_key.contains("placeholder");
+    let is_placeholder = api_key.contains("placeholder") || api_key.is_empty();
 
     if !is_placeholder {
         let client = reqwest::Client::new();
@@ -60,15 +60,44 @@ pub async fn agent_chat(
         }
     }
 
+    // Dynamic, contextual local SRE heuristic router
     let lower = prompt.to_lowercase();
-    let response = if lower.contains("firewall") || lower.contains("packet") || lower.contains("mtu") {
-        "Confirmed. The firewall policy update #FW-899 is dropping packets exceeding 1400 MTU. I have drafted an emergency rollback script."
-    } else if lower.contains("dns") || lower.contains("coredns") {
-        "I detected a CoreDNS CrashLoopBackOff inside kube-system. I recommend running the automated rollback playbook SOP-14."
-    } else if lower.contains("db") || lower.contains("database") || lower.contains("storage") {
-        "The 'orders-prod' database is running low on disk space (84.5% utilized). I can trigger a storage resize task if you approve."
-    } else {
-        "Received. I've scanned the active topology nodes. No critical anomalies are currently detected on the network gateway interface."
+    let response = match agent_id {
+        "AG-2" => { // Incident Agent
+            if lower.contains("incidents") || lower.contains("open") || lower.contains("p1") || lower.contains("alert") {
+                "Active incidents check: 1 P1 alert is unresolved: 'CoreDNS CrashLoopBackOff inside kube-system'. MTTR clock is at 12m. I recommend tracing the core dependencies."
+            } else if lower.contains("rollback") || lower.contains("resolve") || lower.contains("dns") || lower.contains("coredns") {
+                "Crash analysis: CoreDNS config contains invalid upstream DNS servers. Running rollback playbook SOP-14 ($ kubectl rollout restart deployment coredns -n kube-system) will redeploy nominal configuration. Would you like me to trigger it?"
+            } else if lower.contains("savings") || lower.contains("finops") || lower.contains("cost") {
+                "FinOps incident analysis shows that automating cloud database warm standby failovers has recovered 36.5 SRE hours this month ($4,200 savings). Details are stashed in the Cost Report."
+            } else {
+                "SRE Incident Console is online. I can list active P1 alarms, extract target telemetry logs, or suggest manual intervention playbooks."
+            }
+        },
+        "AG-3" => { // Security Agent
+            if lower.contains("scan") || lower.contains("audit") || lower.contains("policy") {
+                "Security scan completed. Inspected 142 IAM policies. Found 2 warning indicators: 'Over-permissive S3 write rules on backup nodes'. I have queued remediation tickets in Decisions."
+            } else if lower.contains("permissions") || lower.contains("iam") || lower.contains("role") {
+                "Role enforcement is aligned with SOC2 criteria. Admin credentials require secondary authorization. I can trigger a security audit validation if needed."
+            } else if lower.contains("incidents") || lower.contains("open") || lower.contains("dns") {
+                "DNS hijack scan shows domain routing security is normal. Security ingress configurations are protected by Cloudflare Edge."
+            } else {
+                "SRE Security Agent is online. I can verify IAM role distributions, run vulnerability scans, or check SOC2 compliance evidence status."
+            }
+        },
+        _ => { // AG-1 or fallback: Network Agent
+            if lower.contains("status") || lower.contains("anomalies") || lower.contains("latency") || lower.contains("traffic") {
+                "Running edge packet analysis... Transmission score is at 98.5%, latency is stable at 45ms. Ingress lines to us-east-1 reflect a minor jitter but are within limits."
+            } else if lower.contains("firewall") || lower.contains("packet") || lower.contains("mtu") || lower.contains("rule") {
+                "Ingress firewall policy check: Ingress rule #FW-899 limits payload size to 1400 MTU. I have mapped this telemetry to the active incident feed."
+            } else if lower.contains("dns") || lower.contains("coredns") {
+                "Network level DNS checks show 97.2% health score. I see core DNS pods restarting inside the virtual cluster network."
+            } else if lower.contains("savings") || lower.contains("finops") || lower.contains("cost") {
+                "FinOps network egress audit: Network traffic caching optimization has saved approximately $1,150 in cross-region egress costs."
+            } else {
+                "Network Agent is online. I can check latency statistics, test firewall port configurations, or trace packet route mappings."
+            }
+        }
     };
 
     Json(json!({ "response": response, "is_success": true }))
