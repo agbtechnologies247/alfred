@@ -324,7 +324,7 @@ export default function Pricing() {
               <button 
                 className={`btn ${p.popular ? 'btn-primary' : 'btn-outline'}`}
                 style={{ width: '100%', padding: '12px', marginBottom: '32px' }}
-                onClick={() => window.location.href = 'https://alfred.agbtechnologies.in/'}
+                onClick={() => window.location.href = '/app/'}
               >
                 {p.cta}
               </button>

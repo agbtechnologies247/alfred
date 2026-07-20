@@ -149,9 +149,9 @@ export function Layout() {
                 <span className="text-slate-500">Username</span>
                 <button
                   type="button"
-                  onClick={() => { setUsername('demo'); setPassword('alfredpassword'); }}
+                  onClick={() => { setUsername('admin'); setPassword('alfredpassword'); }}
                   className="font-mono text-primary hover:underline cursor-pointer"
-                >demo</button>
+                >admin</button>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Password</span>
@@ -160,7 +160,7 @@ export function Layout() {
             </div>
             <button
               type="button"
-              onClick={() => { setUsername('demo'); setPassword('alfredpassword'); }}
+              onClick={() => { setUsername('admin'); setPassword('alfredpassword'); }}
               className="mt-2 w-full text-center text-[10px] text-primary/70 hover:text-primary transition-colors"
             >
               Click to auto-fill →

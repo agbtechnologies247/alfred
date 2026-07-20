@@ -16,7 +16,7 @@ export default function Navbar() {
   const [logoHovered, setLogoHovered] = useState(false);
 
   const handleRedirect = () => {
-    window.location.href = 'https://alfred.agbtechnologies.in/';
+    window.location.href = '/app/';
   };
 
   return (
