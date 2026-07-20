@@ -15,7 +15,7 @@ export const Route = createFileRoute('/analytics')({
 const COLORS = ['hsl(var(--primary))', '#10b981', '#f59e0b', '#ef4444', '#a78bfa', '#06b6d4'];
 
 // ── Excel export: CSV formatted with semicolons, wrapped in BOM ────────────
-function exportToExcel(data: any, roi: any) {
+function exportToExcel(data: any, roi: any, scale: number) {
   const rows: string[][] = [];
   rows.push(['A.L.F.R.E.D. Analytics Export', '', new Date().toLocaleDateString()]);
   rows.push([]);
@@ -28,13 +28,27 @@ function exportToExcel(data: any, roi: any) {
   rows.push(['=== OPEX ROI BY CATEGORY (Source: /api/opex/roi) ===']);
   rows.push(['Category', 'Templates', 'Monthly Events', 'Hrs Saved/mo', 'SRE Savings/mo ($)', 'Avg Confidence (%)']);
   (roi?.by_category ?? []).forEach((c: any) => {
-    rows.push([c.category, c.template_count, c.monthly_occurrences, c.monthly_hours_saved, c.monthly_sre_savings_usd, c.avg_ai_confidence_pct]);
+    rows.push([
+      c.category, 
+      c.template_count, 
+      Math.round(c.monthly_occurrences * scale), 
+      Math.round(c.monthly_hours_saved * scale * 10) / 10, 
+      Math.round(c.monthly_sre_savings_usd * scale), 
+      c.avg_ai_confidence_pct
+    ]);
   });
   rows.push([]);
   rows.push(['=== TOP 5 TEMPLATES BY IMPACT ===']);
   rows.push(['ID', 'Category', 'Monthly Events', 'Resolution (min)', 'Hrs Saved/mo', 'Savings/mo ($)']);
   (roi?.top_5_by_monthly_impact ?? []).forEach((t: any) => {
-    rows.push([t.id, t.category, t.monthly_occurrences, t.estimated_resolution_mins, t.monthly_hours_saved, t.monthly_sre_savings_usd]);
+    rows.push([
+      t.id, 
+      t.category, 
+      Math.round(t.monthly_occurrences * scale), 
+      t.estimated_resolution_mins, 
+      Math.round(t.monthly_hours_saved * scale * 10) / 10, 
+      Math.round(t.monthly_sre_savings_usd * scale)
+    ]);
   });
 
   const csv = rows.map(r => r.join('\t')).join('\n');
@@ -46,80 +60,376 @@ function exportToExcel(data: any, roi: any) {
   a.click(); URL.revokeObjectURL(url);
 }
 
-// ── PPT export: generates an HTML file styled as a slide deck ─────────────
-function exportToPPT(data: any, roi: any) {
+// ── PPT export: generates a highly premium, executive-grade presentation slide deck ─────────────
+function exportToPPT(data: any, roi: any, range: string, scale: number) {
   const s = roi?.summary ?? {};
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-<title>A.L.F.R.E.D. Analytics — ${new Date().toLocaleDateString()}</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-  @page { size: 1280px 720px; margin: 0; }
-  body { background: #05050f; color: #e2e8f0; }
-  .slide { width: 1280px; min-height: 720px; padding: 60px 80px; display: flex; flex-direction: column; gap: 32px; page-break-after: always; border-bottom: 2px solid #1e1e3a; }
-  .slide-title { font-size: 2.4rem; font-weight: 900; background: linear-gradient(135deg,#00d4ff,#7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .slide-sub { color: #64748b; font-size: 1rem; margin-top: -20px; }
-  .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; }
-  .kpi { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 24px; }
-  .kpi-val { font-size: 2rem; font-weight: 900; color: #00d4ff; }
-  .kpi-lbl { font-size: 0.8rem; color: #64748b; margin-top: 6px; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-  th { background: rgba(255,255,255,0.05); padding: 10px 14px; text-align: left; color: #64748b; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
-  td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); }
-  .green { color: #10b981; font-weight: 700; }
-  .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; background: rgba(0,212,255,0.1); color: #00d4ff; border: 1px solid rgba(0,212,255,0.25); }
-  .footer { color: #374151; font-size: 0.72rem; margin-top: auto; }
-</style></head><body>
-<div class="slide">
-  <div class="slide-title">A.L.F.R.E.D. Analytics Report</div>
-  <div class="slide-sub">${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} · All data from live API</div>
-  <div class="kpi-grid">
-    <div class="kpi"><div class="kpi-val">${s.template_count ?? 0}</div><div class="kpi-lbl">Automation Templates</div></div>
-    <div class="kpi"><div class="kpi-val">${(s.total_monthly_occurrences ?? 0).toLocaleString()}</div><div class="kpi-lbl">Monthly Events Automated</div></div>
-    <div class="kpi"><div class="kpi-val">${s.monthly_hours_saved ?? 0} hrs</div><div class="kpi-lbl">Monthly SRE Hours Saved</div></div>
-    <div class="kpi"><div class="kpi-val" style="color:#10b981">$${(s.annual_sre_savings_usd ?? 0).toLocaleString()}</div><div class="kpi-lbl">Annual Cost Avoidance</div></div>
+  
+  const events = Math.round((s.total_monthly_occurrences ?? 0) * scale).toLocaleString();
+  const hours = (Math.round((s.monthly_hours_saved ?? 0) * scale * 10) / 10).toLocaleString();
+  const savings = Math.round((s.monthly_sre_savings_usd ?? 0) * scale).toLocaleString();
+  const annual = Math.round((s.annual_sre_savings_usd ?? 0) * (scale / (30 / 365) / 365)).toLocaleString(); // Adjusted run-rate
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>A.L.F.R.E.D. Executive Analytics Report</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      background: #030712; 
+      color: #f3f4f6; 
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .slide { 
+      width: 1600px; 
+      height: 900px; 
+      padding: 80px 100px; 
+      display: flex; 
+      flex-direction: column; 
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      background: radial-gradient(circle at 90% 10%, rgba(6, 182, 212, 0.08) 0%, rgba(3, 7, 18, 0) 60%),
+                  radial-gradient(circle at 10% 90%, rgba(124, 58, 237, 0.05) 0%, rgba(3, 7, 18, 0) 60%),
+                  #030712;
+      border-bottom: 2px solid #1f2937;
+      page-break-after: always;
+    }
+    
+    /* Cover Slide Specific */
+    .cover-content {
+      margin-top: 120px;
+      max-width: 1000px;
+      z-index: 10;
+    }
+    .tagline {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #06b6d4;
+      text-transform: uppercase;
+      letter-spacing: 0.25em;
+      margin-bottom: 20px;
+    }
+    .cover-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 5rem;
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 30%, #a5f3fc 70%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 30px;
+    }
+    .cover-desc {
+      font-size: 1.35rem;
+      color: #9ca3af;
+      line-height: 1.6;
+      margin-bottom: 50px;
+      font-weight: 300;
+    }
+    
+    /* Standard Slide Header */
+    .slide-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 24px;
+      z-index: 10;
+    }
+    .slide-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: #ffffff;
+    }
+    .slide-subtitle {
+      font-size: 1.05rem;
+      color: #6b7280;
+      margin-top: 6px;
+    }
+    .slide-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      padding: 6px 14px;
+      background: rgba(6, 182, 21 cyan, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.2);
+      color: #06b6d4;
+      border-radius: 9999px;
+    }
+    
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 30px;
+      margin: 60px 0;
+      z-index: 10;
+    }
+    .kpi-card {
+      background: rgba(17, 24, 39, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 40px 30px;
+      backdrop-filter: blur(10px);
+      transition: border-color 0.3s;
+    }
+    .kpi-card:hover {
+      border-color: rgba(6, 182, 212, 0.3);
+    }
+    .kpi-val {
+      font-family: 'Outfit', sans-serif;
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: #ffffff;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .kpi-lbl {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #9ca3af;
+      margin-top: 15px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .kpi-sub {
+      font-size: 0.85rem;
+      color: #6b7280;
+      margin-top: 6px;
+    }
+    
+    /* Table Styles */
+    .table-container {
+      margin-top: 40px;
+      background: rgba(17, 24, 39, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      overflow: hidden;
+      z-index: 10;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 1rem;
+    }
+    th {
+      background: rgba(255, 255, 255, 0.02);
+      padding: 20px 24px;
+      text-align: left;
+      color: #9ca3af;
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    td {
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      color: #d1d5db;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    .green {
+      color: #10b981;
+      font-weight: 700;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      background: rgba(6, 182, 212, 0.08);
+      color: #22d3ee;
+      border: 1px solid rgba(6, 182, 212, 0.2);
+    }
+    
+    /* Footer */
+    .slide-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 24px;
+      font-size: 0.85rem;
+      color: #4b5563;
+      font-weight: 500;
+      z-index: 10;
+    }
+    .logo {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 900;
+      color: #ffffff;
+      letter-spacing: 0.05em;
+    }
+    .logo span {
+      color: #06b6d4;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Slide 1: Cover -->
+  <div class="slide">
+    <div class="logo">A.L.F.R.E.D.<span>/</span>PLATFORM</div>
+    <div class="cover-content">
+      <div class="tagline">EXECUTIVE EVALUATION REPORT</div>
+      <h1 class="cover-title">Operational Excellence &amp;<br>Decoupled Automation ROI</h1>
+      <p class="cover-desc">
+        Continuous audit of AI-recommended infrastructure, incident SLA mitigations, and automated SRE engineering hour recovery metrics.
+      </p>
+    </div>
+    <div class="slide-footer">
+      <div>Report Range: ${range.toUpperCase()} · Live API Pull</div>
+      <div>${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+    </div>
   </div>
-  <div style="color:#64748b;font-size:0.8rem">Source: /api/opex/roi · SRE cost basis $150/hr (Gartner 2024) · Scope: SRE time only</div>
-  <div class="footer">A.L.F.R.E.D. Decision Engineering Platform · Confidential</div>
-</div>
-<div class="slide">
-  <div class="slide-title" style="font-size:1.8rem">Savings by Category</div>
-  <table>
-    <thead><tr><th>Category</th><th>Templates</th><th>Events/mo</th><th>Hrs Saved</th><th>SRE Savings/mo</th><th>AI Confidence</th></tr></thead>
-    <tbody>
-      ${(roi?.by_category ?? []).sort((a: any, b: any) => b.monthly_sre_savings_usd - a.monthly_sre_savings_usd).map((c: any) => `
-        <tr>
-          <td>${c.category}</td><td>${c.template_count}</td>
-          <td>${c.monthly_occurrences}</td><td>${c.monthly_hours_saved} hrs</td>
-          <td class="green">$${c.monthly_sre_savings_usd}</td>
-          <td>${c.avg_ai_confidence_pct}%</td>
-        </tr>`).join('')}
-    </tbody>
-  </table>
-  <div class="footer">A.L.F.R.E.D. Decision Engineering Platform · Confidential</div>
-</div>
-<div class="slide">
-  <div class="slide-title" style="font-size:1.8rem">Top 5 Highest-Impact Templates</div>
-  <table>
-    <thead><tr><th>Template ID</th><th>Category</th><th>Events/mo</th><th>Resolution Time</th><th>Hours Saved/mo</th><th>Monthly Savings</th></tr></thead>
-    <tbody>
-      ${(roi?.top_5_by_monthly_impact ?? []).map((t: any) => `
-        <tr>
-          <td><span class="badge">${t.id}</span></td>
-          <td>${t.category}</td><td>${t.monthly_occurrences}</td>
-          <td>${t.estimated_resolution_mins} min</td>
-          <td>${t.monthly_hours_saved} hrs</td>
-          <td class="green">$${t.monthly_sre_savings_usd}/mo</td>
-        </tr>`).join('')}
-    </tbody>
-  </table>
-  <div class="footer">A.L.F.R.E.D. Decision Engineering Platform · Confidential</div>
-</div>
-</body></html>`;
+
+  <!-- Slide 2: Platform Overview KPIs -->
+  <div class="slide">
+    <div class="slide-header">
+      <div>
+        <h2 class="slide-title">Platform Summary &amp; ROI Impact</h2>
+        <p class="slide-subtitle">Aggregated metrics scaled for the selected evaluation period (${range})</p>
+      </div>
+      <div class="slide-badge">Operational ROI</div>
+    </div>
+    
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-val">${s.template_count ?? 0}</div>
+        <div class="kpi-lbl">Active Templates</div>
+        <div class="kpi-sub">System catalogs loaded</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-val">${events}</div>
+        <div class="kpi-lbl">Events Automated</div>
+        <div class="kpi-sub">Executions trigger checks</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-val">${hours} hrs</div>
+        <div class="kpi-lbl">Hours Recovered</div>
+        <div class="kpi-sub">Saved manual SRE overhead</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-val" style="color: #10b981;">$${savings}</div>
+        <div class="kpi-lbl">Period Savings</div>
+        <div class="kpi-sub">Basis SRE $150/hr index</div>
+      </div>
+    </div>
+    
+    <div style="font-size: 0.9rem; color: #9ca3af; line-height: 1.5; font-weight: 300;">
+      * Savings estimates are computed conservatively based on SRE hours saved via active automation triggers. Downtime prevention coefficients, compliance breach mitigations, and SLA penalty avoidance metrics are excluded from this baseline calculation.
+    </div>
+
+    <div class="slide-footer">
+      <div class="logo">A.L.F.R.E.D.<span>/</span>PLATFORM</div>
+      <div>Confidential · Slide 2</div>
+    </div>
+  </div>
+
+  <!-- Slide 3: Category Savings Breakdown -->
+  <div class="slide">
+    <div class="slide-header">
+      <div>
+        <h2 class="slide-title">Savings Breakdown by Category</h2>
+        <p class="slide-subtitle">Granular performance parameters compiled from system components</p>
+      </div>
+      <div class="slide-badge">Category Metrics</div>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Active Templates</th>
+            <th>Events Triggered</th>
+            <th>Hours Recovered</th>
+            <th>Estimated Period Savings</th>
+            <th>Avg AI Confidence</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${(roi?.by_category ?? []).sort((a: any, b: any) => b.monthly_sre_savings_usd - a.monthly_sre_savings_usd).slice(0, 7).map((c: any) => `
+            <tr>
+              <td style="font-weight: 600; color: #ffffff;">${c.category}</td>
+              <td>${c.template_count}</td>
+              <td>${Math.round(c.monthly_occurrences * scale)}</td>
+              <td>${(Math.round(c.monthly_hours_saved * scale * 10) / 10)} hrs</td>
+              <td class="green">$${Math.round(c.monthly_sre_savings_usd * scale).toLocaleString()}</td>
+              <td>${c.avg_ai_confidence_pct}%</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="slide-footer">
+      <div class="logo">A.L.F.R.E.D.<span>/</span>PLATFORM</div>
+      <div>Confidential · Slide 3</div>
+    </div>
+  </div>
+
+  <!-- Slide 4: High Impact Templates -->
+  <div class="slide">
+    <div class="slide-header">
+      <div>
+        <h2 class="slide-title">Top 5 Highest-Impact Automations</h2>
+        <p class="slide-subtitle">Highest performance metrics recorded within the active workspace</p>
+      </div>
+      <div class="slide-badge">High Impact</div>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Template ID</th>
+            <th>Operational Category</th>
+            <th>Events Triggered</th>
+            <th>Est. Resolution time</th>
+            <th>Hours Recovered</th>
+            <th>SRE Savings</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${(roi?.top_5_by_monthly_impact ?? []).map((t: any) => `
+            <tr>
+              <td><span class="badge">${t.id}</span></td>
+              <td style="font-weight: 600; color: #ffffff;">${t.category}</td>
+              <td>${Math.round(t.monthly_occurrences * scale)}</td>
+              <td>${t.estimated_resolution_mins} mins</td>
+              <td>${(Math.round(t.monthly_hours_saved * scale * 10) / 10)} hrs</td>
+              <td class="green">$${Math.round(t.monthly_sre_savings_usd * scale).toLocaleString()}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="slide-footer">
+      <div class="logo">A.L.F.R.E.D.<span>/</span>PLATFORM</div>
+      <div>Confidential · Slide 4</div>
+    </div>
+  </div>
+
+</body>
+</html>`;
 
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url;
-  a.download = `alfred-report-${new Date().toISOString().slice(0, 10)}.html`;
+  a.download = `alfred-executive-report-${new Date().toISOString().slice(0, 10)}.html`;
   a.click(); URL.revokeObjectURL(url);
 }
 
@@ -130,30 +440,39 @@ function AnalyticsDashboard() {
 
   const isLoading = analyticsLoading || roiLoading;
 
-  const handleExcelExport = useCallback(() => exportToExcel(data, roi), [data, roi]);
-  const handlePPTExport = useCallback(() => exportToPPT(data, roi), [data, roi]);
+  // Scale calculations based on range
+  const scale = range === '7d' ? (7 / 30) : range === '90d' ? 3.0 : 1.0;
 
-  // Category savings from real API
+  const handleExcelExport = useCallback(() => exportToExcel(data, roi, scale), [data, roi, scale]);
+  const handlePPTExport = useCallback(() => exportToPPT(data, roi, range, scale), [data, roi, range, scale]);
+
+  // Category savings from real API with scaling applied
   const categoryData = (roi?.by_category ?? [])
     .sort((a: any, b: any) => b.monthly_sre_savings_usd - a.monthly_sre_savings_usd)
-    .map((c: any) => ({ name: c.category.split(' ')[0], savings: c.monthly_sre_savings_usd, hours: c.monthly_hours_saved, confidence: c.avg_ai_confidence_pct }));
+    .map((c: any) => ({ 
+      name: c.category.split(' ')[0], 
+      savings: Math.round(c.monthly_sre_savings_usd * scale), 
+      hours: Math.round(c.monthly_hours_saved * scale * 10) / 10, 
+      confidence: c.avg_ai_confidence_pct 
+    }));
 
-  // Severity split data
+  // Severity split data scaled
   const severityDist = roi?.severity_distribution
     ? [
-        { name: 'Critical', value: roi.severity_distribution.Critical },
-        { name: 'High',     value: roi.severity_distribution.High },
-        { name: 'Medium',   value: roi.severity_distribution.Medium },
-        { name: 'Low',      value: roi.severity_distribution.Low },
+        { name: 'Critical', value: Math.round(roi.severity_distribution.Critical * scale) },
+        { name: 'High',     value: Math.round(roi.severity_distribution.High * scale) },
+        { name: 'Medium',   value: Math.round(roi.severity_distribution.Medium * scale) },
+        { name: 'Low',      value: Math.round(roi.severity_distribution.Low * scale) },
       ]
     : [];
 
-  // Month-over-month trend (derived from summary for now)
-  const trendData = data?.trends ?? [
-    { name: 'Jan', events: 310, savings: 4650 }, { name: 'Feb', events: 340, savings: 5100 },
-    { name: 'Mar', events: 355, savings: 5325 }, { name: 'Apr', events: 370, savings: 5550 },
-    { name: 'May', events: 388, savings: 5820 }, { name: 'Jun', events: 400, savings: roi?.summary?.monthly_sre_savings_usd ?? 6410 },
-  ];
+  // Mapped backend trends to match expected keys events and savings
+  const rawTrends = data?.trends ?? [];
+  const trendData = rawTrends.map((t: any) => ({
+    name: t.name,
+    events: Math.round((t.usage ?? t.events ?? 0) * scale),
+    savings: Math.round((t.cost ?? t.savings ?? 0) * scale)
+  }));
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-64 text-muted-foreground">
@@ -173,27 +492,27 @@ function AnalyticsDashboard() {
           <div className="flex bg-muted rounded-lg p-1 text-xs">
             {['7d', '30d', '90d'].map(r => (
               <button key={r} onClick={() => setRange(r)}
-                className={`px-3 py-1.5 rounded font-medium transition-colors ${range === r ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                className={`px-3 py-1.5 rounded font-medium transition-colors cursor-pointer ${range === r ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
               >{r}</button>
             ))}
           </div>
           <button onClick={handleExcelExport}
-            className="flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors">
+            className="flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer">
             <FileSpreadsheet className="w-4 h-4" /> Export Excel
           </button>
           <button onClick={handlePPTExport}
-            className="flex items-center gap-2 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors">
+            className="flex items-center gap-2 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer">
             <Presentation className="w-4 h-4" /> Export PPT
           </button>
         </div>
       </div>
 
-      {/* KPI summary from API */}
+      {/* KPI summary from API (Scaled based on range select) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { icon: Zap, label: 'Automation Events/mo', value: roi?.summary?.total_monthly_occurrences?.toLocaleString() ?? '—', sub: 'From template catalog', color: 'text-primary' },
-          { icon: Clock, label: 'SRE Hours Saved/mo', value: `${roi?.summary?.monthly_hours_saved ?? '—'} hrs`, sub: 'Σ occ × mins / 60', color: 'text-amber-400' },
-          { icon: TrendingUp, label: 'Monthly Savings', value: `$${(roi?.summary?.monthly_sre_savings_usd ?? 0).toLocaleString()}`, sub: '$150/hr · Gartner 2024', color: 'text-emerald-400' },
+          { icon: Zap, label: 'Automation Events', value: Math.round((roi?.summary?.total_monthly_occurrences ?? 0) * scale).toLocaleString(), sub: 'From template catalog', color: 'text-primary' },
+          { icon: Clock, label: 'SRE Hours Saved', value: `${(Math.round((roi?.summary?.monthly_hours_saved ?? 0) * scale * 10) / 10).toLocaleString()} hrs`, sub: 'Σ occ × mins / 60', color: 'text-amber-400' },
+          { icon: TrendingUp, label: 'Operational Savings', value: `$${Math.round((roi?.summary?.monthly_sre_savings_usd ?? 0) * scale).toLocaleString()}`, sub: '$150/hr · Gartner 2024', color: 'text-emerald-400' },
           { icon: Activity, label: 'AI Confidence (weighted)', value: `${roi?.summary?.weighted_avg_ai_confidence_pct ?? '—'}%`, sub: 'Weighted by occurrence freq', color: 'text-violet-400' },
         ].map(k => (
           <div key={k.label} className="p-5 rounded-xl border border-border bg-card">
@@ -211,10 +530,10 @@ function AnalyticsDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="p-6 rounded-xl border border-border bg-card">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold">Monthly Automation Events &amp; Savings</h2>
+            <h2 className="text-base font-semibold">Automation Events &amp; Savings Trend</h2>
             <div className="flex items-center gap-1">
               <Calendar className="w-3 h-3 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">6-month trend</span>
+              <span className="text-xs text-muted-foreground">Evaluation period: {range}</span>
             </div>
           </div>
           <div className="h-[240px]">
@@ -249,7 +568,7 @@ function AnalyticsDashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis type="number" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }} tickFormatter={v => `$${v}`} />
                 <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }} width={70} />
-                <Tooltip formatter={(v: any) => [`$${v}/mo`, 'Savings']} contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
+                <Tooltip formatter={(v: any) => [`$${v}`, 'Savings']} contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }} />
                 <Bar dataKey="savings" radius={[0, 4, 4, 0]}>
                   {categoryData.map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Bar>
@@ -278,7 +597,7 @@ function AnalyticsDashboard() {
 
         <div className="lg:col-span-2 p-6 rounded-xl border border-border bg-card">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold">Top Templates by Monthly Impact</h2>
+            <h2 className="text-base font-semibold">Top Templates by Period Impact</h2>
             <span className="text-xs text-muted-foreground">/api/opex/roi · top_5_by_monthly_impact</span>
           </div>
           <div className="overflow-x-auto">
@@ -287,9 +606,9 @@ function AnalyticsDashboard() {
                 <tr>
                   <th className="py-2 pr-4">Template</th>
                   <th className="py-2 pr-4">Category</th>
-                  <th className="py-2 pr-4">Events/mo</th>
+                  <th className="py-2 pr-4">Events</th>
                   <th className="py-2 pr-4">Hrs saved</th>
-                  <th className="py-2">Savings/mo</th>
+                  <th className="py-2">Savings</th>
                 </tr>
               </thead>
               <tbody>
@@ -297,16 +616,16 @@ function AnalyticsDashboard() {
                   <tr key={t.id} className="border-t border-border hover:bg-muted/20">
                     <td className="py-3 pr-4 font-mono text-primary text-xs">{t.id}</td>
                     <td className="py-3 pr-4 text-xs">{t.category}</td>
-                    <td className="py-3 pr-4">{t.monthly_occurrences}</td>
-                    <td className="py-3 pr-4">{t.monthly_hours_saved} hrs</td>
-                    <td className="py-3 font-bold text-emerald-400">${t.monthly_sre_savings_usd}</td>
+                    <td className="py-3 pr-4">{Math.round(t.monthly_occurrences * scale)}</td>
+                    <td className="py-3 pr-4">{(Math.round(t.monthly_hours_saved * scale * 10) / 10)} hrs</td>
+                    <td className="py-3 font-bold text-emerald-400">${Math.round(t.monthly_sre_savings_usd * scale).toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
           <div className="mt-4 p-3 bg-muted/30 rounded-lg text-xs text-muted-foreground">
-            Methodology: SRE savings = monthly_occurrences × estimated_resolution_mins / 60 × $150/hr (Gartner 2024). Downtime avoidance not included.
+            Methodology: SRE savings = occurrences × estimated_resolution_mins / 60 × $150/hr (Gartner 2024). Downtime avoidance not included.
           </div>
         </div>
       </div>
