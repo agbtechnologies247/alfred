@@ -394,7 +394,8 @@ function DecisionsDashboard() {
               <div>
                 <span className="text-[9px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
                   {selectedRec.type}
-                                 <h3 className="text-lg font-bold mt-2 text-slate-900 dark:text-slate-100">{selectedRec.actionText} Plan</h3>
+                </span>
+                <h3 className="text-lg font-bold mt-2 text-slate-900 dark:text-slate-100">{selectedRec.actionText} Plan</h3>
               </div>
               <button 
                 onClick={() => setSelectedRec(null)} 
