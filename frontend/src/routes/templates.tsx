@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useState } from 'react';
-import { FileCode, Search, BrainCircuit, ChevronDown, ChevronUp, Clock, TrendingUp, Shield, Database, Cloud, Server, Network, CheckCircle, Tag } from 'lucide-react';
+import { FileCode, Search, BrainCircuit, ChevronDown, ChevronUp, Clock, TrendingUp, Shield, Database, Cloud, Server, Network, CheckCircle, Tag, X, Loader2, Check } from 'lucide-react';
 
 export const Route = createFileRoute('/templates')({
   component: TemplatesDashboard,
