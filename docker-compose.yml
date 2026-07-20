@@ -8,17 +8,12 @@ services:
       POSTGRES_USER: alfred
       POSTGRES_PASSWORD: alfredpassword
       POSTGRES_DB: alfred_db
-    ports:
-      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
   neo4j:
     image: neo4j:5.12-community
     container_name: alfred_neo4j
-    ports:
-      - "7474:7474"
-      - "7687:7687"
     environment:
       NEO4J_AUTH: neo4j/alfredpassword
     volumes:
@@ -48,8 +43,6 @@ services:
   redis:
     image: redis:7-alpine
     container_name: alfred_redis
-    ports:
-      - "6379:6379"
 
   frontend:
     build:
