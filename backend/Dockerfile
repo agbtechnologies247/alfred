@@ -1,5 +1,5 @@
 # Multi-stage build for A.L.F.R.E.D. API Gateway
-FROM rust:1.80-slim AS builder
+FROM rust:1.85-slim AS builder
 WORKDIR /app
 RUN apt-get update && apt-get install -y pkg-config libssl-dev git && rm -rf /var/lib/apt/lists/*
 COPY . .
