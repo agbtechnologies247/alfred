@@ -2,8 +2,8 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useState, useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Activity } from 'recharts';
-import { SlidersHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { SlidersHorizontal, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
 
 export const Route = createFileRoute('/monitoring')({
   component: MonitoringDashboard,
