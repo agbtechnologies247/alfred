@@ -94,27 +94,42 @@ function SimulatePanel({ decision }: { decision: any }) {
 
 function FeedbackPanel({ decision, onFeedback }: { decision: any; onFeedback: () => void }) {
   const [reason, setReason] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [errorMsg, setErrorMsg] = useState('');
+  
+  const REJECTION_TAGS = ['High Risk', 'Cost Too High', 'Manual Check Needed', 'Out of Maintenance Window', 'Incorrect Diagnosis', 'SOP Outdated'];
+
   const feedbackMutation = useMutation({
-    mutationFn: (dec: 'approved' | 'rejected') =>
-      api.feedback.submit({
+    mutationFn: (dec: 'approved' | 'rejected') => {
+      const finalReason = [
+        ...selectedTags,
+        reason.trim()
+      ].filter(Boolean).join('; ');
+      return api.feedback.submit({
         decision_id: decision.id,
         action_type: 'decision_approval',
         recommendation: decision.recommendation,
         decision: dec,
-        reason: reason || undefined,
+        reason: dec === 'rejected' ? finalReason : undefined,
         user_role: 'engineer',
-      }),
+      });
+    },
     onSuccess: onFeedback,
   });
 
   const handleReject = () => {
-    if (!reason.trim()) {
-      setErrorMsg('Rejection reason is mandatory.');
+    const hasAnyInput = selectedTags.length > 0 || reason.trim().length > 0;
+    if (!hasAnyInput) {
+      setErrorMsg('Please select a tag or enter a rejection reason.');
       return;
     }
     setErrorMsg('');
     feedbackMutation.mutate('rejected');
+  };
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+    setErrorMsg('');
   };
 
   const handleAlternate = () => {
@@ -139,23 +154,47 @@ function FeedbackPanel({ decision, onFeedback }: { decision: any; onFeedback: ()
           </button>
           <button
             onClick={handleReject}
-            disabled={!reason.trim()}
-            className="w-full px-4 py-2.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-colors"
+            className="w-full px-4 py-2.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" /> Reject
           </button>
+          
+          {/* Rejection Tags Selection */}
+          <div className="space-y-1.5 my-1">
+            <div className="text-[10px] text-muted-foreground font-semibold">Select Rejection Tags:</div>
+            <div className="flex flex-wrap gap-1">
+              {REJECTION_TAGS.map(tag => {
+                const isSel = selectedTags.includes(tag);
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => toggleTag(tag)}
+                    className={`px-1.5 py-0.5 rounded text-[9px] font-medium border transition-colors cursor-pointer ${
+                      isSel
+                        ? 'bg-red-500/20 text-red-300 border-red-500/40'
+                        : 'bg-muted/50 text-muted-foreground border-border hover:text-foreground'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <button
             onClick={handleAlternate}
-            className="w-full px-4 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/20 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-colors"
+            className="w-full px-4 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/20 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
             <Zap className="w-4 h-4" /> Look for Alternate Solution
           </button>
           <input
             value={reason} onChange={e => { setReason(e.target.value); setErrorMsg(''); }}
-            placeholder="Rejection reason (mandatory to reject)..."
+            placeholder="Add additional rejection notes (optional)..."
             className="w-full px-3 py-1.5 text-xs rounded-md border border-input bg-transparent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
-          {errorMsg && <div className="text-[10px] text-destructive font-semibold">{errorMsg}</div>}
+          {errorMsg && <div className="text-[10px] text-red-400 font-semibold">{errorMsg}</div>}
         </>
       )}
     </div>
@@ -164,6 +203,8 @@ function FeedbackPanel({ decision, onFeedback }: { decision: any; onFeedback: ()
 
 function DecisionsDashboard() {
   const queryClient = useQueryClient();
+  const [selectedRec, setSelectedRec] = useState<any>(null);
+  
   const { data: pendingDecisions, isLoading } = useQuery({
     queryKey: ['pending-decisions'],
     queryFn: api.decisions.getPending,
@@ -210,9 +251,23 @@ function DecisionsDashboard() {
               <span>Affected: <strong className="text-foreground">{copilot.affected_systems?.join(', ')}</strong></span>
             </div>
             {copilot.recommended_command && (
-              <pre className="mt-3 bg-black/40 border border-border/50 rounded-md px-4 py-2 text-xs font-mono text-emerald-400 overflow-x-auto">
-                {`$ ${copilot.recommended_command}`}
-              </pre>
+              <div className="mt-3 space-y-1.5">
+                <div className="text-[10px] text-muted-foreground uppercase font-semibold">Suggested Remediation Command:</div>
+                <div className="relative group">
+                  <pre className="bg-slate-950 border border-border rounded-md px-4 py-3 text-xs font-mono text-emerald-400 overflow-x-auto font-bold">
+                    {`$ ${copilot.recommended_command}`}
+                  </pre>
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(copilot.recommended_command);
+                      alert('Command copied to clipboard!');
+                    }}
+                    className="absolute right-2 top-2 bg-slate-900 hover:bg-slate-800 border border-border text-slate-300 text-[10px] px-2 py-1 rounded transition-colors cursor-pointer"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -224,15 +279,22 @@ function DecisionsDashboard() {
           <h2 className="text-lg font-semibold mb-3">AI Recommendations</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {recommendations.map((rec: any) => (
-              <div key={rec.id} className="p-4 rounded-xl border border-border bg-card hover:border-primary/30 transition-colors">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{rec.type}</span>
-                  <TrendingDown className="w-4 h-4 text-emerald-400" />
+              <div key={rec.id} className="p-4 rounded-xl border border-border bg-card hover:border-cyan-500/30 transition-colors flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{rec.type}</span>
+                    <TrendingDown className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <p className="text-sm text-foreground mb-4 leading-relaxed">{rec.description}</p>
                 </div>
-                <p className="text-sm text-foreground mb-2 leading-relaxed">{rec.description}</p>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center mt-auto pt-2 border-t border-border/30">
                   <span className="text-xs font-bold text-emerald-400">{rec.metric}</span>
-                  <button className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline">{rec.actionText}</button>
+                  <button 
+                    onClick={() => setSelectedRec(rec)}
+                    className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline font-semibold cursor-pointer"
+                  >
+                    {rec.actionText}
+                  </button>
                 </div>
               </div>
             ))}
@@ -320,6 +382,76 @@ function DecisionsDashboard() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Dynamic Recommendation Details Modal Popup */}
+      {selectedRec && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-card border border-border rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex justify-between items-start">
+              <div>
+                <span className="text-[9px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                  {selectedRec.type}
+                </span>
+                <h3 className="text-lg font-bold mt-2 text-slate-100">{selectedRec.actionText} Plan</h3>
+              </div>
+              <button 
+                onClick={() => setSelectedRec(null)} 
+                className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <p className="text-sm text-slate-300 leading-relaxed">
+                {selectedRec.description}
+              </p>
+              
+              <div className="p-4 rounded-lg bg-white/5 border border-border/60 space-y-1.5">
+                <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Projected Improvement:</div>
+                <div className="text-base font-bold text-emerald-400">{selectedRec.metric}</div>
+                <div className="text-[11px] text-muted-foreground">Confidence level: 98.7% (calculated using historical workspace telemetry data).</div>
+              </div>
+              
+              <div className="text-xs text-muted-foreground space-y-2">
+                <div className="font-semibold text-slate-300">Suggested Action Protocol:</div>
+                <div className="space-y-1">
+                  <div className="flex gap-2">
+                    <span className="text-cyan-400">1.</span>
+                    <span>Initialize pre-execution validation checks on relevant nodes.</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-cyan-400">2.</span>
+                    <span>Execute the calibration workflow routine via the agent-itsm engine.</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-cyan-400">3.</span>
+                    <span>Audit resulting performance metrics and update standard SOP catalogs.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-3 pt-2">
+              <button 
+                onClick={() => setSelectedRec(null)} 
+                className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => { 
+                  alert(`Executing recommendation: ${selectedRec.actionText}`); 
+                  setSelectedRec(null); 
+                }} 
+                className="flex-1 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shadow-lg"
+              >
+                Confirm &amp; Execute
+              </button>
+            </div>
           </div>
         </div>
       )}

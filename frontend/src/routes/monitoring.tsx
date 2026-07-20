@@ -78,7 +78,7 @@ function MonitoringDashboard() {
         <div className="p-6 rounded-xl border border-border bg-card">
           <h2 className="text-lg font-semibold mb-4">Packet Transmission (Live)</h2>
           <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={telemetry?.packet_data || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" />
@@ -94,7 +94,7 @@ function MonitoringDashboard() {
         <div className="p-6 rounded-xl border border-border bg-card">
           <h2 className="text-lg font-semibold mb-4">Global API Latency (ms)</h2>
           <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={300}>
               <LineChart data={telemetry?.latency_data || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" />

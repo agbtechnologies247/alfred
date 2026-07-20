@@ -124,14 +124,15 @@ function ReportsDashboard() {
             {REPORTS.map((r) => {
               const Icon = r.icon;
               const isActive = activeReport === r.id;
+              const borderClass = r.id === 'sla' ? 'border-cyan-500/50' : r.id === 'cost' ? 'border-emerald-500/50' : r.id === 'governance' ? 'border-indigo-500/50' : 'border-rose-500/50';
               return (
                 <button
                   key={r.id}
                   onClick={() => setActiveReport(r.id)}
-                  className={`w-full text-left p-4 rounded-xl border text-sm transition-all duration-200 cursor-pointer flex items-start gap-4 hover:border-primary/40 ${
+                  className={`w-full text-left p-4 rounded-xl border text-sm transition-all duration-200 cursor-pointer flex items-start gap-4 ${
                     isActive 
-                      ? 'bg-primary/5 border-primary/50 shadow-md ' + r.glow
-                      : 'bg-card border-border hover:bg-white/5'
+                      ? 'bg-primary/5 shadow-md ' + borderClass + ' ' + r.glow
+                      : 'bg-card border-border hover:bg-white/5 hover:border-slate-500/40'
                   }`}
                 >
                   <div className={`p-2.5 rounded-lg border shrink-0 ${r.color}`}>
@@ -147,7 +148,7 @@ function ReportsDashboard() {
           </div>
 
           <div className="p-4 rounded-xl border border-border bg-card/50 text-xs text-muted-foreground space-y-2">
-            <div className="flex gap-2 text-primary font-medium">
+            <div className="flex gap-2 text-rose-400 font-medium">
               <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
               <span>SOC2 Compliance Lock</span>
             </div>
@@ -159,7 +160,7 @@ function ReportsDashboard() {
         <div className="lg:col-span-8 bg-card border border-border rounded-xl p-6 print:border-none print:bg-transparent print:p-0">
           {loading ? (
             <div className="py-20 flex flex-col items-center justify-center gap-3">
-              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+              <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
               <p className="text-sm text-muted-foreground">Compiling parameters & generating live layout...</p>
             </div>
           ) : error ? (
@@ -175,7 +176,7 @@ function ReportsDashboard() {
               {/* Report Header */}
               <div className="border-b border-border pb-6 flex items-start justify-between">
                 <div>
-                  <div className="text-xs font-semibold text-primary uppercase tracking-wider">Operational Audit Log</div>
+                  <div className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Operational Audit Log</div>
                   <h2 className="text-2xl font-bold text-slate-100 mt-1">
                     {REPORTS.find(r => r.id === activeReport)?.title}
                   </h2>
@@ -232,7 +233,7 @@ function ReportsDashboard() {
                           {reportData.list && reportData.list.length > 0 ? (
                             reportData.list.map((inc: any) => (
                               <tr key={inc.id} className="hover:bg-white/5">
-                                <td className="p-3 font-mono text-primary font-bold">{inc.id}</td>
+                                <td className="p-3 font-mono text-cyan-400 font-bold">{inc.id}</td>
                                 <td className="p-3 font-medium text-slate-200">{inc.title}</td>
                                 <td className="p-3">
                                   <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
@@ -303,7 +304,7 @@ function ReportsDashboard() {
                           {reportData.top_5 && reportData.top_5.length > 0 ? (
                             reportData.top_5.map((item: any) => (
                               <tr key={item.id} className="hover:bg-white/5">
-                                <td className="p-3 font-mono text-primary font-bold">{item.id}</td>
+                                <td className="p-3 font-mono text-emerald-400 font-bold">{item.id}</td>
                                 <td className="p-3 font-medium text-slate-200">{item.category}</td>
                                 <td className="p-3 text-slate-300">{item.monthly_occurrences} / mo</td>
                                 <td className="p-3 text-cyan-400 font-bold">{item.monthly_hours_saved} hrs</td>
@@ -352,7 +353,7 @@ function ReportsDashboard() {
                         <div key={role.role} className="p-4 rounded-lg bg-white/5 border border-border text-xs space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-slate-200 capitalize">{role.role.replace('_', ' ')}</span>
-                            <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded font-mono text-[9px]">{role.permissions.join(', ')}</span>
+                            <span className="px-1.5 py-0.5 bg-indigo-500/10 text-indigo-300 rounded font-mono text-[9px]">{role.permissions.join(', ')}</span>
                           </div>
                           <p className="text-muted-foreground">{role.description}</p>
                         </div>
