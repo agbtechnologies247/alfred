@@ -139,7 +139,7 @@ function ReportsDashboard() {
                     <Icon className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-100">{r.title}</h3>
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100">{r.title}</h3>
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{r.subtitle}</p>
                   </div>
                 </button>
@@ -177,7 +177,7 @@ function ReportsDashboard() {
               <div className="border-b border-border pb-6 flex items-start justify-between">
                 <div>
                   <div className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Operational Audit Log</div>
-                  <h2 className="text-2xl font-bold text-slate-100 mt-1">
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">
                     {REPORTS.find(r => r.id === activeReport)?.title}
                   </h2>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -211,13 +211,13 @@ function ReportsDashboard() {
                     </div>
                     <div className="p-4 rounded-lg bg-white/5 border border-border">
                       <div className="text-xs text-muted-foreground">SLA Compliance</div>
-                      <div className="text-2xl font-bold text-slate-100 mt-1">99.8%</div>
+                      <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">99.8%</div>
                       <div className="text-[10px] text-emerald-400 mt-1">✅ SLA target met</div>
                     </div>
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-slate-200">Active Incident Feed</h3>
+                    <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Active Incident Feed</h3>
                     <div className="border border-border rounded-lg overflow-hidden">
                       <table className="w-full text-xs text-left">
                         <thead className="bg-white/5 text-muted-foreground uppercase text-[10px]">
@@ -234,7 +234,7 @@ function ReportsDashboard() {
                             reportData.list.map((inc: any) => (
                               <tr key={inc.id} className="hover:bg-white/5">
                                 <td className="p-3 font-mono text-cyan-400 font-bold">{inc.id}</td>
-                                <td className="p-3 font-medium text-slate-200">{inc.title}</td>
+                                <td className="p-3 font-medium text-slate-800 dark:text-slate-200">{inc.title}</td>
                                 <td className="p-3">
                                   <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
                                     inc.priority === 'P1' ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'
@@ -288,7 +288,7 @@ function ReportsDashboard() {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-slate-200">High-Impact Optimization Templates</h3>
+                    <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">High-Impact Optimization Templates</h3>
                     <div className="border border-border rounded-lg overflow-hidden">
                       <table className="w-full text-xs text-left">
                         <thead className="bg-white/5 text-muted-foreground uppercase text-[10px]">
@@ -305,8 +305,8 @@ function ReportsDashboard() {
                             reportData.top_5.map((item: any) => (
                               <tr key={item.id} className="hover:bg-white/5">
                                 <td className="p-3 font-mono text-emerald-400 font-bold">{item.id}</td>
-                                <td className="p-3 font-medium text-slate-200">{item.category}</td>
-                                <td className="p-3 text-slate-300">{item.monthly_occurrences} / mo</td>
+                                <td className="p-3 font-medium text-slate-800 dark:text-slate-200">{item.category}</td>
+                                <td className="p-3 text-slate-700 dark:text-slate-300">{item.monthly_occurrences} / mo</td>
                                 <td className="p-3 text-cyan-400 font-bold">{item.monthly_hours_saved} hrs</td>
                                 <td className="p-3 text-emerald-400 font-bold">${item.monthly_sre_savings_usd?.toLocaleString()}</td>
                               </tr>
@@ -334,7 +334,7 @@ function ReportsDashboard() {
                     </div>
                     <div className="p-4 rounded-lg bg-white/5 border border-border">
                       <div className="text-xs text-muted-foreground">Security Roles Enforced</div>
-                      <div className="text-2xl font-bold text-slate-100 mt-1">
+                      <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">
                         {reportData.roles?.length ?? 0}
                       </div>
                       <div className="text-[10px] text-emerald-400 mt-1">✅ RBAC status: Normal</div>
@@ -347,12 +347,12 @@ function ReportsDashboard() {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-slate-200">Enforced Platform Roles</h3>
+                    <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Enforced Platform Roles</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {reportData.roles && reportData.roles.map((role: any) => (
                         <div key={role.role} className="p-4 rounded-lg bg-white/5 border border-border text-xs space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="font-bold text-slate-200 capitalize">{role.role.replace('_', ' ')}</span>
+                            <span className="font-bold text-slate-800 dark:text-slate-200 capitalize">{role.role.replace('_', ' ')}</span>
                             <span className="px-1.5 py-0.5 bg-indigo-500/10 text-indigo-300 rounded font-mono text-[9px]">{role.permissions.join(', ')}</span>
                           </div>
                           <p className="text-muted-foreground">{role.description}</p>
@@ -376,7 +376,7 @@ function ReportsDashboard() {
                     </div>
                     <div className="p-4 rounded-lg bg-white/5 border border-border">
                       <div className="text-xs text-muted-foreground">Team Risk Rating</div>
-                      <div className="text-2xl font-bold text-slate-100 mt-1">
+                      <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">
                         {reportData.insights?.team_burnout_risk ?? 'Low'}
                       </div>
                       <div className="text-[10px] text-muted-foreground mt-1">Calculated workload metric</div>
@@ -391,7 +391,7 @@ function ReportsDashboard() {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-slate-200">Organization Roster & Stress Index</h3>
+                    <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Organization Roster & Stress Index</h3>
                     <div className="border border-border rounded-lg overflow-hidden">
                       <table className="w-full text-xs text-left">
                         <thead className="bg-white/5 text-muted-foreground uppercase text-[10px]">
@@ -406,9 +406,9 @@ function ReportsDashboard() {
                           {reportData.list && reportData.list.length > 0 ? (
                             reportData.list.map((person: any) => (
                               <tr key={person.id} className="hover:bg-white/5">
-                                <td className="p-3 font-medium text-slate-200">{person.name}</td>
+                                <td className="p-3 font-medium text-slate-800 dark:text-slate-200">{person.name}</td>
                                 <td className="p-3 text-muted-foreground">{person.role}</td>
-                                <td className="p-3 text-slate-300">{person.current_status || 'Active'}</td>
+                                <td className="p-3 text-slate-700 dark:text-slate-300">{person.current_status || 'Active'}</td>
                                 <td className="p-3">
                                   <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
                                     person.stress_level === 'High' 
