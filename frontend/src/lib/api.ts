@@ -337,9 +337,51 @@ const post = async <T = any>(endpoint: string, body: unknown, fallback?: any): P
 export const api = {
   // === Phase 1: Monitoring & Incidents ===
   monitoring: {
-    getKpis: () => fetcher<any>('/monitoring/kpis'),
-    getTelemetry: () => fetcher<any>('/monitoring/telemetry'),
-    getErrors: () => fetcher<any[]>('/monitoring/errors'),
+    getKpis: () => {
+      const fallback = {
+        transmission_score: 98.5,
+        packet_score: 99.1,
+        connection_score: 100.0,
+        dns_score: 97.2
+      };
+      return fetcher<any>('/monitoring/kpis', undefined, fallback);
+    },
+    getTelemetry: () => {
+      const fallback = {
+        packet_data: [
+          { time: "10:00", sent: 4000, received: 4000, dropped: 0 },
+          { time: "10:05", sent: 3000, received: 2980, dropped: 20 },
+          { time: "10:10", sent: 2000, received: 1900, dropped: 100 },
+          { time: "10:15", sent: 2780, received: 2700, dropped: 80 },
+          { time: "10:20", sent: 1890, received: 1890, dropped: 0 },
+          { time: "10:25", sent: 2390, received: 2390, dropped: 0 },
+          { time: "10:30", sent: 3490, received: 3400, dropped: 90 }
+        ],
+        latency_data: [
+          { time: "10:00", latency: 45 },
+          { time: "10:05", latency: 48 },
+          { time: "10:10", latency: 120 },
+          { time: "10:15", latency: 85 },
+          { time: "10:20", latency: 46 },
+          { time: "10:25", latency: 44 },
+          { time: "10:30", latency: 90 }
+        ]
+      };
+      return fetcher<any>('/monitoring/telemetry', undefined, fallback);
+    },
+    getErrors: () => {
+      const fallback = [
+        { timestamp: "10:30:14", layer: "Layer 3", protocol: "TCP", severity: "High", error: "Packet Loss (MTU)", region: "us-east-1" },
+        { timestamp: "10:28:45", layer: "Layer 4", protocol: "UDP", severity: "Medium", error: "Port Unreachable", region: "us-west-2" },
+        { timestamp: "10:22:10", layer: "Layer 7", protocol: "HTTP", severity: "Low", error: "SLA response delay", region: "eu-west-1" },
+        { timestamp: "10:15:02", layer: "Layer 5", protocol: "DNS", severity: "Critical", error: "DNS Resolution Failure", region: "eu-central-1" },
+        { timestamp: "10:10:45", layer: "Layer 4", protocol: "TCP", severity: "High", error: "Connection Refused", region: "ap-south-1" },
+        { timestamp: "10:05:12", layer: "Layer 3", protocol: "ICMP", severity: "Low", error: "Host Unreachable", region: "us-east-1" },
+        { timestamp: "10:01:30", layer: "Layer 7", protocol: "HTTP", severity: "Critical", error: "Internal Server Error 500", region: "sa-east-1" },
+        { timestamp: "09:55:18", layer: "Layer 4", protocol: "TCP", severity: "Medium", error: "Connection Timeout", region: "ap-southeast-1" }
+      ];
+      return fetcher<any[]>('/monitoring/errors', undefined, fallback);
+    },
   },
   incidents: {
     getAll: async () => {

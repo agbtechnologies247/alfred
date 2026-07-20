@@ -72,7 +72,7 @@ function SimulatePanel({ decision }: { decision: any }) {
             </div>
           ))}
           {simResult.recommended_decision && (
-            <div className="col-span-2 md:col-span-4 bg-primary/5 border border-primary/15 rounded-lg p-3 text-xs text-primary">
+            <div className="col-span-2 md:col-span-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-xs text-emerald-400">
               <span className="font-semibold">AI Recommendation: </span>{simResult.recommended_decision}
             </div>
           )}
@@ -140,13 +140,13 @@ function FeedbackPanel({ decision, onFeedback }: { decision: any; onFeedback: ()
           <button
             onClick={handleReject}
             disabled={!reason.trim()}
-            className="w-full px-4 py-2.5 bg-destructive/10 text-destructive disabled:opacity-40 disabled:cursor-not-allowed rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-destructive/20 transition-colors"
+            className="w-full px-4 py-2.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-colors"
           >
             <X className="w-4 h-4" /> Reject
           </button>
           <button
             onClick={handleAlternate}
-            className="w-full px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-colors"
+            className="w-full px-4 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/20 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-colors"
           >
             <Zap className="w-4 h-4" /> Look for Alternate Solution
           </button>
@@ -232,7 +232,7 @@ function DecisionsDashboard() {
                 <p className="text-sm text-foreground mb-2 leading-relaxed">{rec.description}</p>
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-bold text-emerald-400">{rec.metric}</span>
-                  <button className="text-xs text-primary hover:underline">{rec.actionText}</button>
+                  <button className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline">{rec.actionText}</button>
                 </div>
               </div>
             ))}
@@ -253,7 +253,7 @@ function DecisionsDashboard() {
                 {/* Decision Info */}
                 <div className="flex-1 space-y-3">
                   <div className="flex items-center gap-2.5 flex-wrap">
-                    <span className="bg-primary/15 text-primary px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider">
+                    <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider">
                       Pending Approval
                     </span>
                     <span className="text-sm font-mono text-muted-foreground">{decision.id}</span>
