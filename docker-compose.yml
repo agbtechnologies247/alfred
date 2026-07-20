@@ -54,6 +54,14 @@ services:
     depends_on:
       - api-gateway
 
+  public-site:
+    build:
+      context: ./public_site
+      dockerfile: Dockerfile
+    container_name: alfred_public_site
+    ports:
+      - "8082:80"
+
   monitor-agent:
     build:
       context: ./monitor-agent
