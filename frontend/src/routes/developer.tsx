@@ -267,7 +267,14 @@ function DeveloperPortal() {
   ] as const;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-card p-6 rounded-2xl border border-border shadow-lg" style={{
+      ['--foreground' as any]: 'oklch(0.765 0.177 163.223)',
+      ['--background' as any]: 'oklch(0.274 0.006 286.033)',
+      ['--card' as any]: 'oklch(0.274 0.006 286.033)',
+      ['--muted-foreground' as any]: 'oklch(0.765 0.177 163.223 / 75%)',
+      ['--primary' as any]: 'oklch(0.765 0.177 163.223)',
+      ['--border' as any]: 'oklch(0.765 0.177 163.223 / 20%)',
+    }}>
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
