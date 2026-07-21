@@ -366,7 +366,7 @@ const DEFAULT_PEOPLE_RECOMMENDATIONS = {
   }
 };
 
-export async function fetcher<T = any>(endpoint: string, options?: RequestInit, fallback?: T): Promise<T> {
+export async function fetcher<T = any>(endpoint: string, options?: RequestInit, fallback?: T, retries = 2): Promise<T> {
   const token = localStorage.getItem('alfred_token') || 'sk_test_xxxxx';
   const headers = {
     ...options?.headers,
@@ -381,12 +381,18 @@ export async function fetcher<T = any>(endpoint: string, options?: RequestInit, 
       headers,
     });
 
+    if (res.status === 429 && retries > 0) {
+      console.warn(`%c[A.L.F.R.E.D. Rate Limit Retry] %cGET ${endpoint} received 429. Retrying in 250ms...`, 'color: #f59e0b; font-weight: bold', 'color: #94a3b8');
+      await new Promise(r => setTimeout(r, 250));
+      return fetcher<T>(endpoint, options, fallback, retries - 1);
+    }
+
     if (res.status === 401) {
       console.warn(`%c[A.L.F.R.E.D. API Auth] %cUnauthorized for GET ${endpoint}`, 'color: #ef4444; font-weight: bold', 'color: #f59e0b');
     }
 
     if (!res.ok) {
-      throw new Error(`API error: ${res.statusText}`);
+      throw new Error(`API error: ${res.statusText || res.status}`);
     }
 
     const json = await res.json();
