@@ -1,0 +1,29 @@
+[package]
+name = "enterprise-api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+economic-core = { workspace = true }
+pricing-engine = { workspace = true }
+cost-engine = { workspace = true }
+revenue-engine = { workspace = true }
+risk-engine = { workspace = true }
+trust-engine = { workspace = true }
+roi-engine = { workspace = true }
+simulation-engine = { workspace = true }
+billing-engine = { workspace = true }
+marketplace-engine = { workspace = true }
+recommendation-engine = { workspace = true }
+digital-twin-adapter = { workspace = true }
+signal-processor = { workspace = true }
+policy-engine = { workspace = true }
+ai-decision-engine = { workspace = true }
+
+serde = { workspace = true }
+serde_json = { workspace = true }
+rust_decimal = { workspace = true }
+tokio = { workspace = true }
+axum = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }

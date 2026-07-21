@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Terminal } from 'lucide-react';
 
 const fmt = (n: number) => new Intl.NumberFormat('en-US').format(Math.round(n));
 const fmtUSD = (n: number) => '$' + new Intl.NumberFormat('en-US').format(Math.round(n));
@@ -40,6 +41,11 @@ function useRoi() {
           by_category: [
             { category: 'Platform Resiliency', template_count: 13, monthly_occurrences: 2450, monthly_hours_saved: 815, monthly_sre_savings_usd: 122250, avg_ai_confidence_pct: 94 },
             { category: 'Endpoint Engineering', template_count: 10, monthly_occurrences: 1670, monthly_hours_saved: 555, monthly_sre_savings_usd: 83250, avg_ai_confidence_pct: 91 }
+          ],
+          top_5_by_monthly_impact: [
+            { id: 'TPL-001', category: 'IT Operations', estimated_resolution_mins: 8, monthly_occurrences: 3, monthly_hours_saved: 2.25, monthly_sre_savings_usd: 337 },
+            { id: 'TPL-010', category: 'Database', estimated_resolution_mins: 5, monthly_occurrences: 4, monthly_hours_saved: 3.3, monthly_sre_savings_usd: 500 },
+            { id: 'TPL-030', category: 'Security', estimated_resolution_mins: 3, monthly_occurrences: 20, monthly_hours_saved: 15.0, monthly_sre_savings_usd: 2250 }
           ]
         });
         setLoading(false);
@@ -72,15 +78,14 @@ export default function OpExGuide() {
             How A.L.F.R.E.D. reduces<br />
             <span className="text-gradient">your OpEx — in numbers</span>
           </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', maxWidth: '600px', margin: '0 auto 48px' }}>
-            Every number on this page is computed from the live template catalog. No marketing assumptions.
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', maxWidth: '650px', margin: '0 auto 48px' }}>
+            Unified OpEx &amp; ROI Evaluation Guide. Every metric on this page is computed from live catalog parameters. No marketing assumptions.
           </p>
 
           {loading && <div style={{ color: 'var(--text-muted)' }}>Loading live metrics database…</div>}
 
-
           {roi && (
-            <div className="grid-4" style={{ gap: '16px', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)' }}>
+            <div className="grid-4" style={{ gap: '16px' }}>
               {[
                 { val: roi.summary.template_count, lbl: 'Templates', sub: 'automation playbooks', color: 'var(--accent-cyan)' },
                 { val: fmt(roi.summary.total_monthly_occurrences), lbl: 'Events / Month', sub: 'Σ monthly_occurrences', color: '#a78bfa' },
@@ -102,9 +107,9 @@ export default function OpExGuide() {
       <section className="section" style={{ background: 'rgba(255,255,255,0.02)', padding: '80px 0' }}>
         <div className="container" style={{ maxWidth: '900px' }}>
           <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '8px' }}>Your ROI Calculator</h2>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '36px' }}>Adjust for your team. All base numbers from live API.</p>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '36px' }}>Adjust for your team parameters. All base numbers are fetched live from API.</p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          <div className="grid-2" style={{ gap: '24px' }}>
             <div className="card">
               <h3 style={{ marginBottom: '20px', fontSize: '0.95rem' }}>Team Parameters</h3>
               {[
@@ -188,6 +193,52 @@ export default function OpExGuide() {
           </div>
         </section>
       )}
+
+      {/* 30-Day Onboarding Roadmap */}
+      <section className="section" style={{ background: 'rgba(255,255,255,0.01)', padding: '80px 0' }}>
+        <div className="container" style={{ maxWidth: '900px' }}>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '8px' }}>How to Reduce OpEx in 30 Days</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '40px' }}>Proven rollout framework for IT, Security, and SRE leadership.</p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {[
+              { step: '01', title: 'Connect Telemetry & Active Connectors (Days 1–7)', desc: 'Deploy Monitor Agent or integrate Datadog/CloudWatch to map your topology into the Enterprise Digital Twin.' },
+              { step: '02', title: 'Enable Low-Risk Automation Playbooks (Days 8–14)', desc: 'Activate automated password resets, SSL certificate renewals, and idle cloud resource cleanups in auto-approval mode.' },
+              { step: '03', title: 'Configure AI Guardrails & Human-in-the-loop (Days 15–21)', desc: 'Set confidence thresholds (e.g. > 90%) for automated P1/P2 incident mitigations and SRE escalation paths.' },
+              { step: '04', title: 'Review Board-Ready ROI Analytics (Days 22–30)', desc: 'Generate live OpEx reduction reports directly via GET /api/opex/roi or export executive presentation decks.' }
+            ].map(s => (
+              <div key={s.step} className="card" style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+                <div style={{ background: 'linear-gradient(135deg,var(--accent-cyan),#7c3aed)', borderRadius: '12px', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.95rem', color: '#fff', flexShrink: 0 }}>
+                  {s.step}
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px' }}>{s.title}</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.6, margin: 0 }}>{s.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Developer API Code Snippets */}
+      <section className="section" style={{ padding: '80px 0' }}>
+        <div className="container" style={{ maxWidth: '900px' }}>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '8px' }}>API &amp; Integration Access</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Fetch raw ROI parameters programmatically to power your internal executive dashboards.</p>
+
+          <div className="card" style={{ background: '#050714', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', fontSize: '0.82rem', color: 'var(--accent-cyan)' }}>
+              <Terminal size={14} />
+              <span style={{ fontFamily: 'monospace' }}>cURL / REST Endpoint</span>
+            </div>
+            <pre style={{ background: 'rgba(0,0,0,0.4)', padding: '16px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '0.82rem', color: '#34d399', overflowX: 'auto' }}>
+{`curl -X GET "https://alfred.agbtechnologies.in/api/opex/roi" \\
+  -H "Authorization: Bearer sk_test_xxxxx"`}
+            </pre>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

@@ -3,8 +3,10 @@ import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { 
   Download, FileText, Activity, DollarSign, ShieldCheck, 
-  Users, Printer, Loader2, TrendingUp, Clock, AlertCircle, CheckCircle2 
+  Users, Printer, Loader2, TrendingUp, Clock, AlertCircle, CheckCircle2, Presentation 
 } from 'lucide-react';
+import { exportReportPPT, PPT_THEMES } from '@/lib/pptGenerator';
+import type { PPTTemplateStyle } from '@/lib/pptGenerator';
 
 export const Route = createFileRoute('/reports')({
   component: ReportsDashboard,
@@ -61,6 +63,8 @@ function ReportsDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reportData, setReportData] = useState<any>(null);
+  const [showPptMenu, setShowPptMenu] = useState(false);
+  const [isExportingPpt, setIsExportingPpt] = useState(false);
 
   useEffect(() => {
     async function loadReportData() {
@@ -98,6 +102,19 @@ function ReportsDashboard() {
     window.print();
   };
 
+  const handlePPTExport = async (themeStyle: PPTTemplateStyle) => {
+    setIsExportingPpt(true);
+    setShowPptMenu(false);
+    try {
+      const config = REPORTS.find(r => r.id === activeReport);
+      await exportReportPPT(activeReport, config?.title || 'Report Audit', reportData, themeStyle);
+    } catch (err) {
+      console.error('Report PPT export error:', err);
+    } finally {
+      setIsExportingPpt(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header (Hidden when printing) */}
@@ -108,12 +125,49 @@ function ReportsDashboard() {
             Real-time analytics compiled directly from active backend engine parameters.
           </p>
         </div>
-        <button
-          onClick={handlePrint}
-          className="px-4 py-2 border border-border bg-card hover:bg-white/5 rounded-md text-sm font-medium flex items-center gap-2 transition-colors cursor-pointer"
-        >
-          <Printer className="w-4 h-4" /> Print / Save PDF
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handlePrint}
+            className="px-4 py-2 border border-border bg-card hover:bg-white/5 rounded-md text-sm font-medium flex items-center gap-2 transition-colors cursor-pointer"
+          >
+            <Printer className="w-4 h-4" /> Print / Save PDF
+          </button>
+
+          <div className="relative">
+            <button
+              onClick={() => setShowPptMenu(!showPptMenu)}
+              disabled={isExportingPpt || !reportData}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white rounded-md text-sm font-semibold transition-all shadow-md shadow-cyan-500/10 cursor-pointer disabled:opacity-50"
+            >
+              <Presentation className="w-4 h-4" />
+              {isExportingPpt ? 'Generating PPT...' : 'Download Report PPT'}
+            </button>
+
+            {showPptMenu && (
+              <div className="absolute right-0 mt-2 w-72 bg-card border border-border rounded-xl shadow-2xl z-50 p-2 space-y-1 backdrop-blur-xl animate-in fade-in zoom-in-95">
+                <div className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border/50">
+                  Select Slide Theme
+                </div>
+                {(Object.keys(PPT_THEMES) as PPTTemplateStyle[]).map(styleKey => {
+                  const t = PPT_THEMES[styleKey];
+                  return (
+                    <button
+                      key={styleKey}
+                      onClick={() => handlePPTExport(styleKey)}
+                      className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer flex flex-col gap-0.5 group"
+                    >
+                      <div className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-slate-100 group-hover:text-cyan-400">
+                        <span>{t.name}</span>
+                        <Download className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-cyan-400" />
+                      </div>
+                      <span className="text-[11px] text-muted-foreground line-clamp-1 leading-snug">{t.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

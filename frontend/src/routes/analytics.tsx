@@ -8,6 +8,9 @@ import {
 } from 'recharts';
 import { Download, FileSpreadsheet, Presentation, Calendar, TrendingUp, Activity, Clock, Zap } from 'lucide-react';
 
+import { exportAnalyticsPPT, PPT_THEMES } from '@/lib/pptGenerator';
+import type { PPTTemplateStyle } from '@/lib/pptGenerator';
+
 export const Route = createFileRoute('/analytics')({
   component: AnalyticsDashboard,
 });
@@ -60,383 +63,12 @@ function exportToExcel(data: any, roi: any, scale: number) {
   a.click(); URL.revokeObjectURL(url);
 }
 
-// ── PPT export: generates a highly premium, executive-grade presentation slide deck ─────────────
-function exportToPPT(data: any, roi: any, range: string, scale: number) {
-  const s = roi?.summary ?? {};
-  
-  const events = Math.round((s.total_monthly_occurrences ?? 0) * scale).toLocaleString();
-  const hours = (Math.round((s.monthly_hours_saved ?? 0) * scale * 10) / 10).toLocaleString();
-  const savings = Math.round((s.monthly_sre_savings_usd ?? 0) * scale).toLocaleString();
-  const annual = Math.round((s.annual_sre_savings_usd ?? 0) * (scale / (30 / 365) / 365)).toLocaleString(); // Adjusted run-rate
-
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>A.L.F.R.E.D. Executive Analytics Report</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { 
-      background: #030712; 
-      color: #f3f4f6; 
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      -webkit-font-smoothing: antialiased;
-    }
-    .slide { 
-      width: 1600px; 
-      height: 900px; 
-      padding: 80px 100px; 
-      display: flex; 
-      flex-direction: column; 
-      justify-content: space-between;
-      position: relative;
-      overflow: hidden;
-      background: radial-gradient(circle at 90% 10%, rgba(6, 182, 212, 0.08) 0%, rgba(3, 7, 18, 0) 60%),
-                  radial-gradient(circle at 10% 90%, rgba(124, 58, 237, 0.05) 0%, rgba(3, 7, 18, 0) 60%),
-                  #030712;
-      border-bottom: 2px solid #1f2937;
-      page-break-after: always;
-    }
-    
-    /* Cover Slide Specific */
-    .cover-content {
-      margin-top: 120px;
-      max-width: 1000px;
-      z-index: 10;
-    }
-    .tagline {
-      font-family: 'Outfit', sans-serif;
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: #06b6d4;
-      text-transform: uppercase;
-      letter-spacing: 0.25em;
-      margin-bottom: 20px;
-    }
-    .cover-title {
-      font-family: 'Outfit', sans-serif;
-      font-size: 5rem;
-      font-weight: 900;
-      line-height: 1.1;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #ffffff 30%, #a5f3fc 70%, #06b6d4 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 30px;
-    }
-    .cover-desc {
-      font-size: 1.35rem;
-      color: #9ca3af;
-      line-height: 1.6;
-      margin-bottom: 50px;
-      font-weight: 300;
-    }
-    
-    /* Standard Slide Header */
-    .slide-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      padding-bottom: 24px;
-      z-index: 10;
-    }
-    .slide-title {
-      font-family: 'Outfit', sans-serif;
-      font-size: 2.5rem;
-      font-weight: 800;
-      letter-spacing: -0.01em;
-      color: #ffffff;
-    }
-    .slide-subtitle {
-      font-size: 1.05rem;
-      color: #6b7280;
-      margin-top: 6px;
-    }
-    .slide-badge {
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      padding: 6px 14px;
-      background: rgba(6, 182, 21 cyan, 0.1);
-      border: 1px solid rgba(6, 182, 212, 0.2);
-      color: #06b6d4;
-      border-radius: 9999px;
-    }
-    
-    /* KPI Grid */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 30px;
-      margin: 60px 0;
-      z-index: 10;
-    }
-    .kpi-card {
-      background: rgba(17, 24, 39, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 16px;
-      padding: 40px 30px;
-      backdrop-filter: blur(10px);
-      transition: border-color 0.3s;
-    }
-    .kpi-card:hover {
-      border-color: rgba(6, 182, 212, 0.3);
-    }
-    .kpi-val {
-      font-family: 'Outfit', sans-serif;
-      font-size: 3.5rem;
-      font-weight: 900;
-      color: #ffffff;
-      letter-spacing: -0.03em;
-      line-height: 1;
-    }
-    .kpi-lbl {
-      font-size: 1rem;
-      font-weight: 600;
-      color: #9ca3af;
-      margin-top: 15px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .kpi-sub {
-      font-size: 0.85rem;
-      color: #6b7280;
-      margin-top: 6px;
-    }
-    
-    /* Table Styles */
-    .table-container {
-      margin-top: 40px;
-      background: rgba(17, 24, 39, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 16px;
-      overflow: hidden;
-      z-index: 10;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 1rem;
-    }
-    th {
-      background: rgba(255, 255, 255, 0.02);
-      padding: 20px 24px;
-      text-align: left;
-      color: #9ca3af;
-      font-weight: 700;
-      font-size: 0.85rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    td {
-      padding: 20px 24px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-      color: #d1d5db;
-    }
-    tr:last-child td {
-      border-bottom: none;
-    }
-    .green {
-      color: #10b981;
-      font-weight: 700;
-    }
-    .badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      background: rgba(6, 182, 212, 0.08);
-      color: #22d3ee;
-      border: 1px solid rgba(6, 182, 212, 0.2);
-    }
-    
-    /* Footer */
-    .slide-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-      padding-top: 24px;
-      font-size: 0.85rem;
-      color: #4b5563;
-      font-weight: 500;
-      z-index: 10;
-    }
-    .logo {
-      font-family: 'Outfit', sans-serif;
-      font-weight: 900;
-      color: #ffffff;
-      letter-spacing: 0.05em;
-    }
-    .logo span {
-      color: #06b6d4;
-    }
-  </style>
-</head>
-<body>
-
-  <!-- Slide 1: Cover -->
-  <div class="slide">
-    <div class="logo">A.L.F.R.E.D.<span>/</span>PLATFORM</div>
-    <div class="cover-content">
-      <div class="tagline">EXECUTIVE EVALUATION REPORT</div>
-      <h1 class="cover-title">Operational Excellence &amp;<br>Decoupled Automation ROI</h1>
-      <p class="cover-desc">
-        Continuous audit of AI-recommended infrastructure, incident SLA mitigations, and automated SRE engineering hour recovery metrics.
-      </p>
-    </div>
-    <div class="slide-footer">
-      <div>Report Range: ${range.toUpperCase()} · Live API Pull</div>
-      <div>${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-    </div>
-  </div>
-
-  <!-- Slide 2: Platform Overview KPIs -->
-  <div class="slide">
-    <div class="slide-header">
-      <div>
-        <h2 class="slide-title">Platform Summary &amp; ROI Impact</h2>
-        <p class="slide-subtitle">Aggregated metrics scaled for the selected evaluation period (${range})</p>
-      </div>
-      <div class="slide-badge">Operational ROI</div>
-    </div>
-    
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-val">${s.template_count ?? 0}</div>
-        <div class="kpi-lbl">Active Templates</div>
-        <div class="kpi-sub">System catalogs loaded</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-val">${events}</div>
-        <div class="kpi-lbl">Events Automated</div>
-        <div class="kpi-sub">Executions trigger checks</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-val">${hours} hrs</div>
-        <div class="kpi-lbl">Hours Recovered</div>
-        <div class="kpi-sub">Saved manual SRE overhead</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-val" style="color: #10b981;">$${savings}</div>
-        <div class="kpi-lbl">Period Savings</div>
-        <div class="kpi-sub">Basis SRE $150/hr index</div>
-      </div>
-    </div>
-    
-    <div style="font-size: 0.9rem; color: #9ca3af; line-height: 1.5; font-weight: 300;">
-      * Savings estimates are computed conservatively based on SRE hours saved via active automation triggers. Downtime prevention coefficients, compliance breach mitigations, and SLA penalty avoidance metrics are excluded from this baseline calculation.
-    </div>
-
-    <div class="slide-footer">
-      <div class="logo">A.L.F.R.E.D.<span>/</span>PLATFORM</div>
-      <div>Confidential · Slide 2</div>
-    </div>
-  </div>
-
-  <!-- Slide 3: Category Savings Breakdown -->
-  <div class="slide">
-    <div class="slide-header">
-      <div>
-        <h2 class="slide-title">Savings Breakdown by Category</h2>
-        <p class="slide-subtitle">Granular performance parameters compiled from system components</p>
-      </div>
-      <div class="slide-badge">Category Metrics</div>
-    </div>
-
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>Category</th>
-            <th>Active Templates</th>
-            <th>Events Triggered</th>
-            <th>Hours Recovered</th>
-            <th>Estimated Period Savings</th>
-            <th>Avg AI Confidence</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${(roi?.by_category ?? []).sort((a: any, b: any) => b.monthly_sre_savings_usd - a.monthly_sre_savings_usd).slice(0, 7).map((c: any) => `
-            <tr>
-              <td style="font-weight: 600; color: #ffffff;">${c.category}</td>
-              <td>${c.template_count}</td>
-              <td>${Math.round(c.monthly_occurrences * scale)}</td>
-              <td>${(Math.round(c.monthly_hours_saved * scale * 10) / 10)} hrs</td>
-              <td class="green">$${Math.round(c.monthly_sre_savings_usd * scale).toLocaleString()}</td>
-              <td>${c.avg_ai_confidence_pct}%</td>
-            </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>
-
-    <div class="slide-footer">
-      <div class="logo">A.L.F.R.E.D.<span>/</span>PLATFORM</div>
-      <div>Confidential · Slide 3</div>
-    </div>
-  </div>
-
-  <!-- Slide 4: High Impact Templates -->
-  <div class="slide">
-    <div class="slide-header">
-      <div>
-        <h2 class="slide-title">Top 5 Highest-Impact Automations</h2>
-        <p class="slide-subtitle">Highest performance metrics recorded within the active workspace</p>
-      </div>
-      <div class="slide-badge">High Impact</div>
-    </div>
-
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>Template ID</th>
-            <th>Operational Category</th>
-            <th>Events Triggered</th>
-            <th>Est. Resolution time</th>
-            <th>Hours Recovered</th>
-            <th>SRE Savings</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${(roi?.top_5_by_monthly_impact ?? []).map((t: any) => `
-            <tr>
-              <td><span class="badge">${t.id}</span></td>
-              <td style="font-weight: 600; color: #ffffff;">${t.category}</td>
-              <td>${Math.round(t.monthly_occurrences * scale)}</td>
-              <td>${t.estimated_resolution_mins} mins</td>
-              <td>${(Math.round(t.monthly_hours_saved * scale * 10) / 10)} hrs</td>
-              <td class="green">$${Math.round(t.monthly_sre_savings_usd * scale).toLocaleString()}</td>
-            </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>
-
-    <div class="slide-footer">
-      <div class="logo">A.L.F.R.E.D.<span>/</span>PLATFORM</div>
-      <div>Confidential · Slide 4</div>
-    </div>
-  </div>
-
-</body>
-</html>`;
-
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url;
-  a.download = `alfred-executive-report-${new Date().toISOString().slice(0, 10)}.html`;
-  a.click(); URL.revokeObjectURL(url);
-}
-
 function AnalyticsDashboard() {
   const { data, isLoading: analyticsLoading } = useQuery({ queryKey: ['analytics'], queryFn: api.analytics.get });
   const { data: roi, isLoading: roiLoading } = useQuery({ queryKey: ['opexRoi'], queryFn: api.opex.getRoi });
   const [range, setRange] = useState('30d');
+  const [showPptMenu, setShowPptMenu] = useState(false);
+  const [isExportingPpt, setIsExportingPpt] = useState(false);
 
   const isLoading = analyticsLoading || roiLoading;
 
@@ -444,7 +76,18 @@ function AnalyticsDashboard() {
   const scale = range === '7d' ? (7 / 30) : range === '90d' ? 3.0 : 1.0;
 
   const handleExcelExport = useCallback(() => exportToExcel(data, roi, scale), [data, roi, scale]);
-  const handlePPTExport = useCallback(() => exportToPPT(data, roi, range, scale), [data, roi, range, scale]);
+  
+  const handlePPTExport = async (themeStyle: PPTTemplateStyle) => {
+    setIsExportingPpt(true);
+    setShowPptMenu(false);
+    try {
+      await exportAnalyticsPPT(data, roi, range, scale, themeStyle);
+    } catch (err) {
+      console.error('PPT generation failed:', err);
+    } finally {
+      setIsExportingPpt(false);
+    }
+  };
 
   // Category savings from real API with scaling applied
   const categoryData = (roi?.by_category ?? [])
@@ -488,7 +131,7 @@ function AnalyticsDashboard() {
           <h1 className="text-3xl font-bold tracking-tight">Analytics &amp; Reporting</h1>
           <p className="text-muted-foreground text-sm mt-1">All numbers computed from live API — no assumptions</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 relative">
           <div className="flex bg-muted rounded-lg p-1 text-xs">
             {['7d', '30d', '90d'].map(r => (
               <button key={r} onClick={() => setRange(r)}
@@ -500,10 +143,38 @@ function AnalyticsDashboard() {
             className="flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer">
             <FileSpreadsheet className="w-4 h-4" /> Export Excel
           </button>
-          <button onClick={handlePPTExport}
-            className="flex items-center gap-2 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer">
-            <Presentation className="w-4 h-4" /> Export PPT
-          </button>
+          
+          <div className="relative">
+            <button onClick={() => setShowPptMenu(!showPptMenu)} disabled={isExportingPpt}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white rounded-lg text-sm font-semibold transition-all shadow-md shadow-cyan-500/10 cursor-pointer disabled:opacity-50">
+              <Presentation className="w-4 h-4" />
+              {isExportingPpt ? 'Generating PPT...' : 'Download PPT Deck'}
+            </button>
+
+            {showPptMenu && (
+              <div className="absolute right-0 mt-2 w-72 bg-card border border-border rounded-xl shadow-2xl z-50 p-2 space-y-1 backdrop-blur-xl animate-in fade-in zoom-in-95">
+                <div className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border/50">
+                  Select Presentation Theme
+                </div>
+                {(Object.keys(PPT_THEMES) as PPTTemplateStyle[]).map(styleKey => {
+                  const t = PPT_THEMES[styleKey];
+                  return (
+                    <button
+                      key={styleKey}
+                      onClick={() => handlePPTExport(styleKey)}
+                      className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer flex flex-col gap-0.5 group"
+                    >
+                      <div className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-slate-100 group-hover:text-cyan-400">
+                        <span>{t.name}</span>
+                        <Download className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-cyan-400" />
+                      </div>
+                      <span className="text-[11px] text-muted-foreground line-clamp-1 leading-snug">{t.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -1,0 +1,52 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/economic-core",
+    "crates/pricing-engine",
+    "crates/roi-engine",
+    "crates/cost-engine",
+    "crates/revenue-engine",
+    "crates/risk-engine",
+    "crates/trust-engine",
+    "crates/simulation-engine",
+    "crates/billing-engine",
+    "crates/marketplace-engine",
+    "crates/recommendation-engine",
+    "crates/digital-twin-adapter",
+    "crates/signal-processor",
+    "crates/policy-engine",
+    "crates/ai-decision-engine",
+    "crates/enterprise-api",
+]
+
+[workspace.dependencies]
+economic-core = { path = "crates/economic-core" }
+pricing-engine = { path = "crates/pricing-engine" }
+roi-engine = { path = "crates/roi-engine" }
+cost-engine = { path = "crates/cost-engine" }
+revenue-engine = { path = "crates/revenue-engine" }
+risk-engine = { path = "crates/risk-engine" }
+trust-engine = { path = "crates/trust-engine" }
+simulation-engine = { path = "crates/simulation-engine" }
+billing-engine = { path = "crates/billing-engine" }
+marketplace-engine = { path = "crates/marketplace-engine" }
+recommendation-engine = { path = "crates/recommendation-engine" }
+digital-twin-adapter = { path = "crates/digital-twin-adapter" }
+signal-processor = { path = "crates/signal-processor" }
+policy-engine = { path = "crates/policy-engine" }
+ai-decision-engine = { path = "crates/ai-decision-engine" }
+
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rust_decimal = { version = "1.35", features = ["serde-float"] }
+tokio = { version = "1.37", features = ["full"] }
+axum = "0.7"
+reqwest = { version = "0.12", features = ["json"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+uuid = { version = "1.8", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+[profile.dev]
+codegen-units = 1
+

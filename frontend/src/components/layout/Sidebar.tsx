@@ -39,7 +39,7 @@ const NAV_GROUPS = [
     label: 'System',
     items: [
       { name: 'Developer Portal', to: '/developer', icon: Code },
-      { name: 'OpEx Guide', to: '/opex-guide.html', icon: HelpCircle, external: true },
+      { name: 'OpEx Guide', to: '/opex', icon: HelpCircle, external: true },
       { name: 'Settings', to: '/settings', icon: Settings },
     ],
   },

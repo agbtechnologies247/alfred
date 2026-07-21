@@ -1,0 +1,18 @@
+[package]
+name = "ai-decision-engine"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+economic-core = { workspace = true }
+pricing-engine = { workspace = true }
+cost-engine = { workspace = true }
+revenue-engine = { workspace = true }
+risk-engine = { workspace = true }
+trust-engine = { workspace = true }
+roi-engine = { workspace = true }
+simulation-engine = { workspace = true }
+policy-engine = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+rust_decimal = { workspace = true }

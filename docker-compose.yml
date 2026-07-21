@@ -72,6 +72,16 @@ services:
     depends_on:
       - api-gateway
 
+  economic-engine:
+    build:
+      context: ./alfred-economic-engine
+      dockerfile: Dockerfile
+    container_name: alfred_economic_engine
+    ports:
+      - "3005:3005"
+    depends_on:
+      - redis
+
 volumes:
   pgdata:
   neo4jdata:
