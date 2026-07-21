@@ -46,7 +46,8 @@ function SreConsole() {
     let i = 0;
     const interval = setInterval(() => {
       if (i < currentLogs.length) {
-        setLogs(prev => [...prev, currentLogs[i]]);
+        const logItem = currentLogs[i];
+        setLogs(prev => [...prev, logItem]);
         i++;
       } else {
         clearInterval(interval);
@@ -144,9 +145,9 @@ function SreConsole() {
       }}>
         {logs.map((log, index) => {
           let color = '#a7f3d0';
-          if (log.includes('[WARN]')) color = '#fde047';
-          if (log.includes('[ACTION]')) color = '#f43f5e';
-          if (log.includes('[OK]')) color = '#34d399';
+          if (log && log.includes('[WARN]')) color = '#fde047';
+          if (log && log.includes('[ACTION]')) color = '#f43f5e';
+          if (log && log.includes('[OK]')) color = '#34d399';
           return (
             <div key={index} style={{ color, display: 'flex', gap: '10px' }}>
               <span style={{ color: 'rgba(255,255,255,0.15)', userSelect: 'none' }}>&gt;</span>
@@ -451,10 +452,10 @@ export default function Home() {
                 }}>
                   {steps[activeStep].logs.map((log, index) => {
                     let logColor = '#fff';
-                    if (log.includes('[WARN]')) logColor = '#fde047';
-                    if (log.includes('[ACTION]')) logColor = '#f43f5e';
-                    if (log.includes('[OK]')) logColor = '#34d399';
-                    if (log.includes('[INFO]')) logColor = 'var(--text-muted)';
+                    if (log && log.includes('[WARN]')) logColor = '#fde047';
+                    if (log && log.includes('[ACTION]')) logColor = '#f43f5e';
+                    if (log && log.includes('[OK]')) logColor = '#34d399';
+                    if (log && log.includes('[INFO]')) logColor = 'var(--text-muted)';
                     return (
                       <div key={index} style={{ color: logColor }}>
                         <span style={{ color: 'rgba(255,255,255,0.1)', marginRight: '8px' }}>$</span>
