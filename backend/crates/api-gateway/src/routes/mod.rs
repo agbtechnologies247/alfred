@@ -8,6 +8,7 @@ pub mod incidents;
 pub mod knowledge;
 pub mod marketplace;
 pub mod monitoring;
+pub mod onboarding;
 pub mod ontology;
 pub mod people;
 pub mod validation;
@@ -139,6 +140,15 @@ pub fn api_router(state: AppState) -> Router<AppState> {
         .route(
             "/validation/metrics",
             get(validation::get_executive_metrics),
+        )
+        // === Enterprise Onboarding & Application Configuration ===
+        .route(
+            "/onboarding",
+            get(onboarding::get_onboarding_config).post(onboarding::save_onboarding_config),
+        )
+        .route(
+            "/onboarding/test-connection",
+            post(onboarding::test_connection),
         )
         .route_layer(middleware::from_fn_with_state(
             state.clone(),

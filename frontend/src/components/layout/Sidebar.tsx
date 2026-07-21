@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import {
   LayoutDashboard, Activity, AlertTriangle, BrainCircuit, BookOpen,
   Zap, Bot, BarChart3, FileText, Settings, Package, Shield,
-  GitBranch, Network, Code, HelpCircle, Users, ShieldAlert,
+  GitBranch, Network, Code, HelpCircle, Users, ShieldAlert, Server,
 } from 'lucide-react';
 
 const NAV_GROUPS = [
@@ -39,6 +39,7 @@ const NAV_GROUPS = [
     label: 'System',
     items: [
       { name: 'Developer Portal', to: '/developer', icon: Code },
+      { name: 'App Onboarding', to: '/onboarding', icon: Server },
       { name: 'OpEx Guide', to: '/opex', icon: HelpCircle, external: true },
       { name: 'Settings', to: '/settings', icon: Settings },
     ],

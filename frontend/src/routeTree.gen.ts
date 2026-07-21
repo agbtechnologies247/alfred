@@ -20,6 +20,7 @@ import { Route as IncidentsRouteImport } from './routes/incidents'
 import { Route as KnowledgeRouteImport } from './routes/knowledge'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as MonitoringRouteImport } from './routes/monitoring'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as PeopleRouteImport } from './routes/people'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -81,6 +82,11 @@ const MonitoringRoute = MonitoringRouteImport.update({
   path: '/monitoring',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PeopleRoute = PeopleRouteImport.update({
   id: '/people',
   path: '/people',
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/knowledge': typeof KnowledgeRoute
   '/marketplace': typeof MarketplaceRoute
   '/monitoring': typeof MonitoringRoute
+  '/onboarding': typeof OnboardingRoute
   '/people': typeof PeopleRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByTo {
   '/knowledge': typeof KnowledgeRoute
   '/marketplace': typeof MarketplaceRoute
   '/monitoring': typeof MonitoringRoute
+  '/onboarding': typeof OnboardingRoute
   '/people': typeof PeopleRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
@@ -156,6 +164,7 @@ export interface FileRoutesById {
   '/knowledge': typeof KnowledgeRoute
   '/marketplace': typeof MarketplaceRoute
   '/monitoring': typeof MonitoringRoute
+  '/onboarding': typeof OnboardingRoute
   '/people': typeof PeopleRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
@@ -176,6 +185,7 @@ export interface FileRouteTypes {
     | '/knowledge'
     | '/marketplace'
     | '/monitoring'
+    | '/onboarding'
     | '/people'
     | '/reports'
     | '/settings'
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/knowledge'
     | '/marketplace'
     | '/monitoring'
+    | '/onboarding'
     | '/people'
     | '/reports'
     | '/settings'
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/knowledge'
     | '/marketplace'
     | '/monitoring'
+    | '/onboarding'
     | '/people'
     | '/reports'
     | '/settings'
@@ -231,6 +243,7 @@ export interface RootRouteChildren {
   KnowledgeRoute: typeof KnowledgeRoute
   MarketplaceRoute: typeof MarketplaceRoute
   MonitoringRoute: typeof MonitoringRoute
+  OnboardingRoute: typeof OnboardingRoute
   PeopleRoute: typeof PeopleRoute
   ReportsRoute: typeof ReportsRoute
   SettingsRoute: typeof SettingsRoute
@@ -317,6 +330,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MonitoringRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/people': {
       id: '/people'
       path: '/people'
@@ -367,6 +387,7 @@ const rootRouteChildren: RootRouteChildren = {
   KnowledgeRoute: KnowledgeRoute,
   MarketplaceRoute: MarketplaceRoute,
   MonitoringRoute: MonitoringRoute,
+  OnboardingRoute: OnboardingRoute,
   PeopleRoute: PeopleRoute,
   ReportsRoute: ReportsRoute,
   SettingsRoute: SettingsRoute,

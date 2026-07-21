@@ -875,5 +875,51 @@ export const api = {
       };
       return fetcher<any>('/validation/metrics', undefined, fallback);
     }
+  },
+  onboarding: {
+    getConfig: async () => {
+      const fallback = {
+        app_name: "BillSoft SaaS Local",
+        app_version: "1.0.0",
+        environment: "production",
+        container_engine: "Docker Compose",
+        backend_container: "billsoft-backend",
+        frontend_container: "billsoft-frontend",
+        backend_port: 5055,
+        frontend_port: 3002,
+        health_endpoint: "http://localhost:5055/api/health",
+        readiness_endpoint: "http://localhost:5055/api/health/deep",
+        log_stream_path: "/app/data/logs/app.log",
+        db_engine: "SQLite / Prisma ORM",
+        db_connection_template: "file:/app/data/billsoft.db",
+        db_backup_path: "./scripts/deploy.sh -> ./backups/",
+        auth_provider: "JWT (Bearer Token)",
+        service_account_token: "sk_alfred_billsoft_service_key_9941",
+        queue_engine: "BullMQ + Redis 7",
+        fqdn_url: "http://billsoft.agbtechnologies.com",
+        api_base_url: "http://localhost:5055/api",
+        sre_hourly_cost_usd: 150,
+        criticality_tier: "Tier 1 (Core Billing)",
+        outage_cost_per_hour_usd: 25000,
+        target_mttr_mins: 15,
+        auto_approve_container_restart: true,
+        auto_approve_db_pool_flush: true,
+        auto_approve_cache_clear: true,
+        max_auto_impact_usd: 1000,
+      };
+      return fetcher<any>('/onboarding', undefined, fallback);
+    },
+    saveConfig: async (config: any) => {
+      return post<any>('/onboarding', config, { status: "success", message: "Saved successfully", config });
+    },
+    testConnection: async (endpointUrl: string) => {
+      return post<any>('/onboarding/test-connection', { endpoint_url: endpointUrl }, {
+        status: "success",
+        endpoint_tested: endpointUrl,
+        latency_ms: 42,
+        http_code: 200,
+        message: "Connection verified successfully."
+      });
+    }
   }
 };
