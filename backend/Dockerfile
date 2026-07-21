@@ -1,5 +1,5 @@
 # Multi-stage build for A.L.F.R.E.D. API Gateway
-FROM rust:slim AS builder
+FROM rust:slim-bookworm AS builder
 WORKDIR /app
 RUN apt-get update && apt-get install -y pkg-config libssl-dev git && rm -rf /var/lib/apt/lists/*
 COPY . .
