@@ -32,9 +32,9 @@ services:
       - NEO4J_USER=neo4j
       - NEO4J_PASS=alfredpassword
       - REDIS_URL=redis://redis:6379
-      - OPENAI_API_KEY=sk-proj-placeholder-replace-with-real-key-in-prod
-      - SLACK_WEBHOOK_URL=https://hooks.slack.com/services/mock/webhook/url
-      - PAGERDUTY_ROUTING_KEY=mock_pagerduty_routing_key_123
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-sk-proj-placeholder-replace-with-real-key-in-prod}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-https://hooks.slack.com/services/mock/webhook/url}
+      - PAGERDUTY_ROUTING_KEY=${PAGERDUTY_ROUTING_KEY:-mock_pagerduty_routing_key_123}
     depends_on:
       - postgres
       - neo4j
