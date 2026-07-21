@@ -6,10 +6,10 @@ use serde::{Deserialize, Serialize};
 pub enum Role {
     SuperAdmin,
     TenantAdmin,
-    SrEngineer,      // Can approve high-risk actions
-    Engineer,        // Can approve medium-risk actions
+    SrEngineer, // Can approve high-risk actions
+    Engineer,   // Can approve medium-risk actions
     ReadOnly,
-    AiOnly,          // AI agents — no human approvals
+    AiOnly, // AI agents — no human approvals
 }
 
 /// Permission scope
@@ -60,25 +60,38 @@ impl GovernanceEngine {
     pub fn get_permissions(&self, role: &Role) -> Vec<Permission> {
         match role {
             Role::SuperAdmin => vec![
-                Permission::IncidentRead, Permission::IncidentWrite,
-                Permission::WorkflowExecute, Permission::WorkflowApprove,
-                Permission::MarketplaceInstall, Permission::SettingsWrite,
-                Permission::AuditRead, Permission::DecisionApprove,
-                Permission::CloudWrite, Permission::IdentityWrite,
+                Permission::IncidentRead,
+                Permission::IncidentWrite,
+                Permission::WorkflowExecute,
+                Permission::WorkflowApprove,
+                Permission::MarketplaceInstall,
+                Permission::SettingsWrite,
+                Permission::AuditRead,
+                Permission::DecisionApprove,
+                Permission::CloudWrite,
+                Permission::IdentityWrite,
             ],
             Role::TenantAdmin => vec![
-                Permission::IncidentRead, Permission::IncidentWrite,
-                Permission::WorkflowExecute, Permission::WorkflowApprove,
-                Permission::MarketplaceInstall, Permission::SettingsWrite,
-                Permission::AuditRead, Permission::DecisionApprove,
+                Permission::IncidentRead,
+                Permission::IncidentWrite,
+                Permission::WorkflowExecute,
+                Permission::WorkflowApprove,
+                Permission::MarketplaceInstall,
+                Permission::SettingsWrite,
+                Permission::AuditRead,
+                Permission::DecisionApprove,
             ],
             Role::SrEngineer => vec![
-                Permission::IncidentRead, Permission::IncidentWrite,
-                Permission::WorkflowExecute, Permission::WorkflowApprove,
-                Permission::DecisionApprove, Permission::CloudWrite,
+                Permission::IncidentRead,
+                Permission::IncidentWrite,
+                Permission::WorkflowExecute,
+                Permission::WorkflowApprove,
+                Permission::DecisionApprove,
+                Permission::CloudWrite,
             ],
             Role::Engineer => vec![
-                Permission::IncidentRead, Permission::IncidentWrite,
+                Permission::IncidentRead,
+                Permission::IncidentWrite,
                 Permission::WorkflowExecute,
             ],
             Role::ReadOnly => vec![Permission::IncidentRead, Permission::AuditRead],
@@ -95,8 +108,12 @@ impl GovernanceEngine {
     pub async fn audit(&self, entry: AuditEntry) {
         tracing::info!(
             "AUDIT [{}] user={} role={} action={} resource={} outcome={}",
-            entry.tenant_id, entry.user_id, entry.user_role,
-            entry.action, entry.resource, entry.outcome
+            entry.tenant_id,
+            entry.user_id,
+            entry.user_role,
+            entry.action,
+            entry.resource,
+            entry.outcome
         );
         if let Some(pool) = &self.pg_pool {
             let id = uuid::Uuid::parse_str(&entry.id).unwrap_or_else(|_| uuid::Uuid::new_v4());
@@ -134,7 +151,7 @@ impl GovernanceEngine {
                 .bind(limit as i64)
                 .fetch_all(pool)
                 .await;
-            
+
             if let Ok(records) = rows {
                 use sqlx::Row;
                 let mut result = Vec::new();
@@ -168,7 +185,6 @@ impl GovernanceEngine {
         tenant_id == resource_tenant_id
     }
 }
-
 
 impl Default for GovernanceEngine {
     fn default() -> Self {

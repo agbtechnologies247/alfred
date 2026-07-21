@@ -1,7 +1,7 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use storage_engine::StorageEngine;
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 pub mod worker;
 
@@ -27,11 +27,21 @@ impl KnowledgeEngine {
 
     /// Takes a resolved incident, formats it into a markdown SOP (via AI or templates),
     /// and stores it with versioning logic.
-    pub async fn learn_from_incident(&self, incident_id: &str, title: &str, resolution_steps: Vec<String>, existing_sop_id: Option<Uuid>) -> Result<SopDocument, String> {
+    pub async fn learn_from_incident(
+        &self,
+        incident_id: &str,
+        title: &str,
+        resolution_steps: Vec<String>,
+        existing_sop_id: Option<Uuid>,
+    ) -> Result<SopDocument, String> {
         tracing::info!("Learning from incident {} to generate SOP...", incident_id);
-        
-        let content = format!("# SOP: {}\n\n## Auto-Generated Resolution Steps:\n- {}", title, resolution_steps.join("\n- "));
-        
+
+        let content = format!(
+            "# SOP: {}\n\n## Auto-Generated Resolution Steps:\n- {}",
+            title,
+            resolution_steps.join("\n- ")
+        );
+
         let (parent_id, new_version) = match existing_sop_id {
             Some(pid) => {
                 // In a real DB, we would query the current version of the parent_id
@@ -51,15 +61,34 @@ impl KnowledgeEngine {
             created_from_incident_id: incident_id.to_string(),
         };
 
-        if let Err(e) = self.storage.create_sop(sop.id, sop.parent_id, sop.version, &sop.title, &sop.content, &sop.created_from_incident_id).await {
+        if let Err(e) = self
+            .storage
+            .create_sop(
+                sop.id,
+                sop.parent_id,
+                sop.version,
+                &sop.title,
+                &sop.content,
+                &sop.created_from_incident_id,
+            )
+            .await
+        {
             tracing::error!("Failed to store SOP in PostgreSQL: {}", e);
         } else {
-            tracing::info!("Stored SOP version {} (ID: {}) in PostgreSQL", sop.version, sop.id);
+            tracing::info!(
+                "Stored SOP version {} (ID: {}) in PostgreSQL",
+                sop.version,
+                sop.id
+            );
         }
 
         if let Some(_graph) = &self.storage.graph_db {
             // Mocking Neo4j edge creation
-            tracing::info!("Created graph link (Incident: {}) -[MITIGATED_BY]-> (SOP: {}) in Neo4J", incident_id, sop.id);
+            tracing::info!(
+                "Created graph link (Incident: {}) -[MITIGATED_BY]-> (SOP: {}) in Neo4J",
+                incident_id,
+                sop.id
+            );
         }
 
         Ok(sop)

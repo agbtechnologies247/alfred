@@ -1,8 +1,8 @@
+use crate::node::{ExecutableNode, NodeType};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::{HashMap, VecDeque};
 use storage_engine::StorageEngine;
-use crate::node::{NodeType, ExecutableNode};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -29,7 +29,11 @@ impl WorkflowEngine {
         Self { storage }
     }
 
-    pub async fn execute_graph(&self, graph_json: &Value, initial_context: Value) -> Result<(), String> {
+    pub async fn execute_graph(
+        &self,
+        graph_json: &Value,
+        initial_context: Value,
+    ) -> Result<(), String> {
         let graph: WorkflowGraph = serde_json::from_value(graph_json.clone())
             .map_err(|e| format!("Failed to parse workflow graph: {}", e))?;
 
@@ -48,7 +52,10 @@ impl WorkflowEngine {
 
         for edge in &graph.edges {
             if graph.nodes.contains_key(&edge.from) && graph.nodes.contains_key(&edge.to) {
-                adjacency.entry(edge.from.clone()).or_default().push(edge.to.clone());
+                adjacency
+                    .entry(edge.from.clone())
+                    .or_default()
+                    .push(edge.to.clone());
                 *in_degree.entry(edge.to.clone()).or_insert(0) += 1;
             }
         }
@@ -80,21 +87,24 @@ impl WorkflowEngine {
             tracing::info!("Workflow [{}] executing node: {}", execution_id, node_id);
 
             match node {
-                NodeType::Action(action) => {
-                    match action.execute(&context).await {
-                        Ok(result) => {
-                            context[node_id.clone()] = result;
-                        }
-                        Err(e) => {
-                            tracing::error!("Workflow [{}] failed at action node {}: {}", execution_id, node_id, e);
-                            return Err(e);
-                        }
+                NodeType::Action(action) => match action.execute(&context).await {
+                    Ok(result) => {
+                        context[node_id.clone()] = result;
                     }
-                }
+                    Err(e) => {
+                        tracing::error!(
+                            "Workflow [{}] failed at action node {}: {}",
+                            execution_id,
+                            node_id,
+                            e
+                        );
+                        return Err(e);
+                    }
+                },
                 NodeType::Condition(cond) => {
-                    let field_val = context.get(&cond.field).or_else(|| {
-                        context.get("metrics").and_then(|m| m.get(&cond.field))
-                    });
+                    let field_val = context
+                        .get(&cond.field)
+                        .or_else(|| context.get("metrics").and_then(|m| m.get(&cond.field)));
 
                     let matched = match field_val {
                         Some(val) => {
@@ -111,12 +121,21 @@ impl WorkflowEngine {
                             }
                         }
                         None => {
-                            tracing::warn!("Workflow [{}] condition field {} not found in context", execution_id, cond.field);
+                            tracing::warn!(
+                                "Workflow [{}] condition field {} not found in context",
+                                execution_id,
+                                cond.field
+                            );
                             false
                         }
                     };
 
-                    tracing::info!("Workflow [{}] condition node {} evaluated to: {}", execution_id, node_id, matched);
+                    tracing::info!(
+                        "Workflow [{}] condition node {} evaluated to: {}",
+                        execution_id,
+                        node_id,
+                        matched
+                    );
 
                     if !matched {
                         if let Some(children) = adjacency.get(&node_id) {
@@ -153,7 +172,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_empty_workflow_execution() {
-        let storage = StorageEngine { pg_pool: None, graph_db: None };
+        let storage = StorageEngine {
+            pg_pool: None,
+            graph_db: None,
+        };
         let engine = WorkflowEngine::new(storage);
 
         let workflow = json!({
@@ -169,7 +191,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_linear_workflow_execution() {
-        let storage = StorageEngine { pg_pool: None, graph_db: None };
+        let storage = StorageEngine {
+            pg_pool: None,
+            graph_db: None,
+        };
         let engine = WorkflowEngine::new(storage);
 
         let workflow = json!({
@@ -203,7 +228,10 @@ mod tests {
     /// Both action nodes run real shell commands through automation-engine.
     #[tokio::test]
     async fn test_dag_with_real_shell_execution() {
-        let storage = StorageEngine { pg_pool: None, graph_db: None };
+        let storage = StorageEngine {
+            pg_pool: None,
+            graph_db: None,
+        };
         let engine = WorkflowEngine::new(storage);
 
         let workflow = json!({
@@ -236,13 +264,19 @@ mod tests {
         });
 
         let res = engine.execute_graph(&workflow, json!({})).await;
-        assert!(res.is_ok(), "Multi-step DAG with real shell commands should succeed");
+        assert!(
+            res.is_ok(),
+            "Multi-step DAG with real shell commands should succeed"
+        );
     }
 
     /// Integration test: condition node evaluates to false → downstream action is skipped.
     #[tokio::test]
     async fn test_condition_skips_downstream_on_false() {
-        let storage = StorageEngine { pg_pool: None, graph_db: None };
+        let storage = StorageEngine {
+            pg_pool: None,
+            graph_db: None,
+        };
         let engine = WorkflowEngine::new(storage);
 
         let workflow = json!({
@@ -276,17 +310,22 @@ mod tests {
         });
 
         // cpu_usage is 50 — below the threshold of 90, so "remediate" should be SKIPPED
-        let res = engine.execute_graph(
-            &workflow,
-            json!({ "cpu_usage": 50.0 }),
-        ).await;
-        assert!(res.is_ok(), "Workflow with skipped condition should still succeed");
+        let res = engine
+            .execute_graph(&workflow, json!({ "cpu_usage": 50.0 }))
+            .await;
+        assert!(
+            res.is_ok(),
+            "Workflow with skipped condition should still succeed"
+        );
     }
 
     /// Integration test: condition evaluates to true → downstream action runs.
     #[tokio::test]
     async fn test_condition_allows_downstream_on_true() {
-        let storage = StorageEngine { pg_pool: None, graph_db: None };
+        let storage = StorageEngine {
+            pg_pool: None,
+            graph_db: None,
+        };
         let engine = WorkflowEngine::new(storage);
 
         let workflow = json!({
@@ -320,11 +359,12 @@ mod tests {
         });
 
         // disk_usage is 92 — above 85, so "cleanup" SHOULD execute
-        let res = engine.execute_graph(
-            &workflow,
-            json!({ "disk_usage": 92.0 }),
-        ).await;
-        assert!(res.is_ok(), "Workflow with passing condition should execute downstream action");
+        let res = engine
+            .execute_graph(&workflow, json!({ "disk_usage": 92.0 }))
+            .await;
+        assert!(
+            res.is_ok(),
+            "Workflow with passing condition should execute downstream action"
+        );
     }
 }
-

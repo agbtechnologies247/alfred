@@ -1,35 +1,37 @@
+use ai_gateway::{AiProvider, OpenAiClient};
+use alert_engine::AlertEngine;
 use axum::{
-    routing::{get, post},
-    Router,
-    Json,
     http::StatusCode,
+    routing::{get, post},
+    Json, Router,
 };
+use config_engine::ConfigEngine;
+use crc_engine::CrcValidator;
+use dns_engine::DnsMonitor;
+use event_bus::EventBus;
+use feedback_engine::FeedbackEngine;
+use governance_engine::GovernanceEngine;
+use knowledge_engine::KnowledgeEngine;
+use latency_engine::LatencyMonitor;
+use ml_engine::MlEngine;
+use monitor_core::{
+    init_monitor,
+    telemetry::{process_telemetry, TelemetryPayload},
+};
+use ontology_engine::OntologyEngine;
+use packet_engine::PacketAnalyzer;
+use people_engine::PeopleEngine;
+use registry_service::RegistryService;
+use reqwest::Client;
+use simulation_engine::SimulationEngine;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use monitor_core::{init_monitor, telemetry::{TelemetryPayload, process_telemetry}};
-use tower_http::cors::CorsLayer;
-use event_bus::EventBus;
-use config_engine::ConfigEngine;
 use storage_engine::StorageEngine;
-use knowledge_engine::KnowledgeEngine;
-use ai_gateway::{OpenAiClient, AiProvider};
+use tower_http::cors::CorsLayer;
 use workflow_engine::WorkflowEngine;
-use ontology_engine::OntologyEngine;
-use ml_engine::MlEngine;
-use feedback_engine::FeedbackEngine;
-use registry_service::RegistryService;
-use simulation_engine::SimulationEngine;
-use governance_engine::GovernanceEngine;
-use reqwest::Client;
-use dns_engine::DnsMonitor;
-use latency_engine::LatencyMonitor;
-use packet_engine::PacketAnalyzer;
-use crc_engine::CrcValidator;
-use alert_engine::AlertEngine;
-use people_engine::PeopleEngine;
 
 mod routes;
-use routes::monitoring::{TELEMETRY_REQUESTS_TOTAL, register_custom_metrics};
+use routes::monitoring::{register_custom_metrics, TELEMETRY_REQUESTS_TOTAL};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -57,23 +59,24 @@ async fn main() {
 
     init_monitor();
 
-    let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
+    let redis_url =
+        std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
     let event_bus = EventBus::new(Some(&redis_url));
     packet_engine::init_packet_engine(event_bus.clone());
     let config = Arc::new(ConfigEngine::new());
-    
+
     // Connect to PostgreSQL and Neo4J using dynamic vault/config credentials
     let storage = StorageEngine::new(
         &config.database_url,
         &config.neo4j_url,
         &config.neo4j_user,
-        &config.neo4j_pass
-    ).await.expect("Failed to initialize StorageEngine! Production database is strictly required.");
+        &config.neo4j_pass,
+    )
+    .await
+    .expect("Failed to initialize StorageEngine! Production database is strictly required.");
 
     // Phase 1: AI Gateway — multi-model abstraction
-    let ai_client: Arc<dyn AiProvider> = Arc::new(
-        OpenAiClient::new(&config.openai_key, "gpt-4o")
-    );
+    let ai_client: Arc<dyn AiProvider> = Arc::new(OpenAiClient::new(&config.openai_key, "gpt-4o"));
 
     // Phase 1: Workflow Engine — DAG execution
     let workflow_engine = Arc::new(WorkflowEngine::new(storage.clone()));
@@ -117,7 +120,10 @@ async fn main() {
     tokio::spawn(start_webhook_dispatcher(event_bus.clone(), storage.clone()));
 
     // Start Alert Engine (Slack, PagerDuty reactive loops)
-    let alert_engine = AlertEngine::new(config.slack_webhook.clone(), config.pagerduty_routing_key.clone());
+    let alert_engine = AlertEngine::new(
+        config.slack_webhook.clone(),
+        config.pagerduty_routing_key.clone(),
+    );
     alert_engine.start(event_bus.clone());
 
     // Start Knowledge Engine Background Worker
@@ -129,7 +135,10 @@ async fn main() {
     dns_monitor.start(event_bus.clone(), storage.clone());
 
     // Start Latency & Connection active monitoring task (probes Postgres and Neo4j sockets every 15s)
-    let latency_monitor = LatencyMonitor::new(vec!["127.0.0.1:5432".to_string(), "127.0.0.1:7687".to_string()], 15);
+    let latency_monitor = LatencyMonitor::new(
+        vec!["127.0.0.1:5432".to_string(), "127.0.0.1:7687".to_string()],
+        15,
+    );
     latency_monitor.start(event_bus.clone(), storage.clone());
 
     // Setup Rate Limiter
@@ -139,29 +148,42 @@ async fn main() {
             .per_second(20)
             .burst_size(100)
             .finish()
-            .unwrap()
+            .unwrap(),
     );
 
     // Setup CORS
-    use axum::http::{Method, HeaderValue};
+    use axum::http::{HeaderValue, Method};
     let cors = CorsLayer::new()
         .allow_origin("http://localhost:5174".parse::<HeaderValue>().unwrap())
-        .allow_methods(vec![Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
+        .allow_methods(vec![
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::DELETE,
+            Method::OPTIONS,
+        ])
         .allow_headers(tower_http::cors::Any);
 
     let app = Router::new()
         .route("/health", get(health_check))
         .route("/telemetry", post(handle_telemetry))
         .nest("/api", routes::api_router(state.clone()))
-        .layer(GovernorLayer { config: governor_conf })
+        .layer(GovernorLayer {
+            config: governor_conf,
+        })
         .layer(cors)
         .with_state(state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     tracing::info!("A.L.F.R.E.D. listening on http://{}", addr);
-    
+
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
-    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await.unwrap();
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .unwrap();
 }
 
 async fn health_check() -> Json<serde_json::Value> {
@@ -184,8 +206,13 @@ async fn handle_telemetry(
     let validator = CrcValidator::new();
     let metrics_value = serde_json::to_value(&payload.metrics).unwrap_or(serde_json::Value::Null);
 
-    analyzer.analyze_telemetry(&payload.host, payload.metrics.packet_loss, &metrics_value, &state.event_bus);
-    
+    analyzer.analyze_telemetry(
+        &payload.host,
+        payload.metrics.packet_loss,
+        &metrics_value,
+        &state.event_bus,
+    );
+
     let payload_bytes = payload.layer.as_bytes();
     let computed_crc = validator.compute_crc32(payload_bytes);
     // Corrupt the checksum to simulate frame errors if packet loss is high

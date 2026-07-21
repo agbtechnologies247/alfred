@@ -1,10 +1,10 @@
-use std::time::Instant;
-use tokio::net::TcpStream;
-use event_bus::{EventBus, AlfredEvent};
-use storage_engine::{StorageEngine, UnifiedEvent};
-use uuid::Uuid;
 use chrono::Utc;
+use event_bus::{AlfredEvent, EventBus};
 use serde_json::json;
+use std::time::Instant;
+use storage_engine::{StorageEngine, UnifiedEvent};
+use tokio::net::TcpStream;
+use uuid::Uuid;
 
 pub struct LatencyMonitor {
     pub targets: Vec<String>,
@@ -13,7 +13,10 @@ pub struct LatencyMonitor {
 
 impl LatencyMonitor {
     pub fn new(targets: Vec<String>, interval_seconds: u64) -> Self {
-        Self { targets, interval_seconds }
+        Self {
+            targets,
+            interval_seconds,
+        }
     }
 
     pub fn start(&self, event_bus: EventBus, storage: StorageEngine) {
@@ -28,12 +31,14 @@ impl LatencyMonitor {
                     let start = Instant::now();
                     match tokio::time::timeout(
                         tokio::time::Duration::from_millis(2000),
-                        TcpStream::connect(&target)
-                    ).await {
+                        TcpStream::connect(&target),
+                    )
+                    .await
+                    {
                         Ok(Ok(_)) => {
                             let duration = start.elapsed().as_millis() as f64;
                             tracing::info!("TCP probe to {}: success ({:.1}ms)", target, duration);
-                            
+
                             let ue = UnifiedEvent {
                                 event_id: Uuid::new_v4(),
                                 timestamp: Utc::now(),
@@ -55,7 +60,10 @@ impl LatencyMonitor {
                             let _ = storage.log_unified_event(&ue).await;
 
                             let event = AlfredEvent::AiAnalysisCompleted {
-                                incident_id: format!("latency-monitor-{}", target.replace(':', "-")),
+                                incident_id: format!(
+                                    "latency-monitor-{}",
+                                    target.replace(':', "-")
+                                ),
                                 tags: vec!["rtt_success".to_string(), target.clone()],
                                 confidence: duration,
                             };

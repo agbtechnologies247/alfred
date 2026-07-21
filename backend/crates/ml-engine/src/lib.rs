@@ -41,14 +41,24 @@ impl MlEngine {
     pub fn predict_failure(&self, entity_id: &str, features: &serde_json::Value) -> Prediction {
         tracing::info!("ML: Predicting failure for entity={}", entity_id);
 
-        let input_val = features.get("load_index").and_then(|v| v.as_f64()).unwrap_or(1.0) as f32;
+        let input_val = features
+            .get("load_index")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(1.0) as f32;
         let model_path = "models/failure_predictor.onnx";
 
         if std::path::Path::new(model_path).exists() {
             if let Ok(pred_prob) = self.run_onnx_inference(model_path, input_val) {
-                tracing::info!("ML: Live neural inference completed using tract-onnx. Output={:.4}", pred_prob);
+                tracing::info!(
+                    "ML: Live neural inference completed using tract-onnx. Output={:.4}",
+                    pred_prob
+                );
                 return Prediction {
-                    label: if pred_prob > 0.5 { "failure_likely".into() } else { "stable".into() },
+                    label: if pred_prob > 0.5 {
+                        "failure_likely".into()
+                    } else {
+                        "stable".into()
+                    },
                     probability: pred_prob as f64,
                     confidence_interval: (pred_prob as f64 - 0.03, pred_prob as f64 + 0.03),
                     model_used: "onnx-resnet-tract".into(),
@@ -59,25 +69,33 @@ impl MlEngine {
         // Stub: deterministic mock based on entity_id hash
         let prob = (entity_id.len() % 10) as f64 * 0.09;
         Prediction {
-            label: if prob > 0.5 { "failure_likely".into() } else { "stable".into() },
+            label: if prob > 0.5 {
+                "failure_likely".into()
+            } else {
+                "stable".into()
+            },
             probability: prob,
             confidence_interval: (prob - 0.05, prob + 0.05),
             model_used: "xgboost-v2-stub".into(),
         }
     }
 
-    fn run_onnx_inference(&self, model_path: &str, input: f32) -> Result<f32, Box<dyn std::error::Error + Send + Sync>> {
+    fn run_onnx_inference(
+        &self,
+        model_path: &str,
+        input: f32,
+    ) -> Result<f32, Box<dyn std::error::Error + Send + Sync>> {
         use tract_onnx::prelude::*;
-        
+
         let model = tract_onnx::onnx()
             .model_for_path(model_path)?
             .into_optimized()?
             .into_runnable()?;
-            
+
         let input_tensor = tensor1(&[input]);
         let result = model.run(tvec!(input_tensor.into()))?;
         let output = result[0].to_array_view::<f32>()?[0];
-        
+
         Ok(output)
     }
 
@@ -86,7 +104,13 @@ impl MlEngine {
         let z_score = (metric_value - baseline_mean).abs() / baseline_std.max(0.001);
         let is_anomaly = z_score > 3.0; // 3-sigma rule
         if is_anomaly {
-            tracing::warn!("ML: Anomaly detected! value={:.2} mean={:.2} std={:.2} z={:.2}", metric_value, baseline_mean, baseline_std, z_score);
+            tracing::warn!(
+                "ML: Anomaly detected! value={:.2} mean={:.2} std={:.2} z={:.2}",
+                metric_value,
+                baseline_mean,
+                baseline_std,
+                z_score
+            );
         }
         is_anomaly
     }
@@ -94,7 +118,10 @@ impl MlEngine {
     /// Compute risk score for a decision context
     pub fn compute_risk_score(&self, context: &serde_json::Value) -> RiskScore {
         // Stub: in production uses ensemble model
-        let impact = context.get("impact_radius").and_then(|v| v.as_f64()).unwrap_or(0.3);
+        let impact = context
+            .get("impact_radius")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.3);
         let score = (impact * 0.6 + 0.2).min(1.0);
         RiskScore {
             score,
@@ -118,13 +145,18 @@ impl MlEngine {
             should_auto_approve: prob > 0.92,
             rationale: format!(
                 "Action '{}' has {:.0}% historical approval rate at this risk level",
-                action_type, prob * 100.0
+                action_type,
+                prob * 100.0
             ),
         }
     }
 
     /// Capacity forecast (Prophet-style time series — stub)
-    pub fn forecast_capacity(&self, resource_id: &str, current_usage_pct: f64) -> serde_json::Value {
+    pub fn forecast_capacity(
+        &self,
+        resource_id: &str,
+        current_usage_pct: f64,
+    ) -> serde_json::Value {
         let days_to_capacity = ((100.0 - current_usage_pct) / 1.5).round() as u32;
         serde_json::json!({
             "resource_id": resource_id,
@@ -151,11 +183,14 @@ mod tests {
         let features = serde_json::json!({
             "load_index": 0.5
         });
-        
+
         let prediction = engine.predict_failure("test-entity", &features);
-        
+
         // Assert that the ONNX model is loaded and run since models/failure_predictor.onnx exists
-        assert!(prediction.model_used.contains("onnx-resnet-tract") || prediction.model_used.contains("xgboost-v2-stub"));
+        assert!(
+            prediction.model_used.contains("onnx-resnet-tract")
+                || prediction.model_used.contains("xgboost-v2-stub")
+        );
         if prediction.model_used.contains("onnx-resnet-tract") {
             // Expected output is input * 0.8: 0.5 * 0.8 = 0.4
             assert!((prediction.probability - 0.4).abs() < 1e-4);

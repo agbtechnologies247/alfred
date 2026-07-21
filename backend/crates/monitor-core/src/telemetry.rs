@@ -17,10 +17,19 @@ pub struct Metrics {
 }
 
 pub fn process_telemetry(payload: &TelemetryPayload) {
-    tracing::info!("Received telemetry from {}: CPU={:.1}% Latency={:.1}ms", payload.host, payload.metrics.cpu_usage, payload.metrics.latency);
-    
+    tracing::info!(
+        "Received telemetry from {}: CPU={:.1}% Latency={:.1}ms",
+        payload.host,
+        payload.metrics.cpu_usage,
+        payload.metrics.latency
+    );
+
     // Simulate rule engine
     if payload.metrics.packet_loss > 5.0 {
-        tracing::warn!("ALERT: High packet loss detected on {} ({}%)", payload.host, payload.metrics.packet_loss);
+        tracing::warn!(
+            "ALERT: High packet loss detected on {} ({}%)",
+            payload.host,
+            payload.metrics.packet_loss
+        );
     }
 }

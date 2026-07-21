@@ -1,10 +1,10 @@
-use std::time::Instant;
-use tokio::net::lookup_host;
-use event_bus::{EventBus, AlfredEvent};
-use storage_engine::{StorageEngine, UnifiedEvent};
-use uuid::Uuid;
 use chrono::Utc;
+use event_bus::{AlfredEvent, EventBus};
 use serde_json::json;
+use std::time::Instant;
+use storage_engine::{StorageEngine, UnifiedEvent};
+use tokio::net::lookup_host;
+use uuid::Uuid;
 
 pub struct DnsMonitor {
     pub targets: Vec<String>,
@@ -13,7 +13,10 @@ pub struct DnsMonitor {
 
 impl DnsMonitor {
     pub fn new(targets: Vec<String>, interval_seconds: u64) -> Self {
-        Self { targets, interval_seconds }
+        Self {
+            targets,
+            interval_seconds,
+        }
     }
 
     pub fn start(&self, event_bus: EventBus, storage: StorageEngine) {
@@ -30,8 +33,12 @@ impl DnsMonitor {
                     match lookup_host(format!("{}:80", target)).await {
                         Ok(_) => {
                             let duration = start.elapsed().as_millis() as f64;
-                            tracing::info!("DNS resolution for {}: success ({:.1}ms)", target, duration);
-                            
+                            tracing::info!(
+                                "DNS resolution for {}: success ({:.1}ms)",
+                                target,
+                                duration
+                            );
+
                             let ue = UnifiedEvent {
                                 event_id: Uuid::new_v4(),
                                 timestamp: Utc::now(),

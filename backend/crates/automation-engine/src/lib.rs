@@ -1,6 +1,6 @@
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use reqwest::Client;
 use std::process::Stdio;
 
 pub struct ExecutionRuntime;
@@ -14,12 +14,24 @@ pub struct AutomationTask {
 
 impl ExecutionRuntime {
     pub async fn execute_task(task: &AutomationTask) -> Result<Value, String> {
-        tracing::info!("Automation: Running task type={} target={}", task.action_type, task.target);
+        tracing::info!(
+            "Automation: Running task type={} target={}",
+            task.action_type,
+            task.target
+        );
 
         match task.action_type.as_str() {
             "ssh" => {
-                let cmd = task.payload.get("command").and_then(|v| v.as_str()).unwrap_or("echo 'default'");
-                tracing::info!("SSH: Establishing secure channel to {}... Executing: '{}'", task.target, cmd);
+                let cmd = task
+                    .payload
+                    .get("command")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("echo 'default'");
+                tracing::info!(
+                    "SSH: Establishing secure channel to {}... Executing: '{}'",
+                    task.target,
+                    cmd
+                );
                 Ok(json!({
                     "stdout": format!("[ssh-{}] success: executed '{}'", task.target, cmd),
                     "exit_code": 0
@@ -27,7 +39,11 @@ impl ExecutionRuntime {
             }
             "api" => {
                 let client = Client::new();
-                let method = task.payload.get("method").and_then(|v| v.as_str()).unwrap_or("POST");
+                let method = task
+                    .payload
+                    .get("method")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("POST");
                 let body = task.payload.get("body").cloned().unwrap_or(json!({}));
 
                 tracing::info!("API: Dispatched HTTP {} to URL={}", method, task.target);
@@ -43,23 +59,30 @@ impl ExecutionRuntime {
                         let text = resp.text().await.unwrap_or_default();
                         Ok(json!({ "status_code": status, "response": text }))
                     }
-                    Err(e) => Err(format!("HTTP Request failed: {}", e))
+                    Err(e) => Err(format!("HTTP Request failed: {}", e)),
                 }
             }
             "local" => {
-                let script = task.payload.get("script").and_then(|v| v.as_str()).unwrap_or("echo 'running'");
-                
+                let script = task
+                    .payload
+                    .get("script")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("echo 'running'");
+
                 // Strict validation to prevent command injection
                 let forbidden_patterns = [
-                    "rm ", "del ", "format ", "mkfs", "dd ", "chmod ", "chown ", "wget ", "curl ", 
+                    "rm ", "del ", "format ", "mkfs", "dd ", "chmod ", "chown ", "wget ", "curl ",
                     "nc ", "netcat", "bash -i", "sh -i", "/dev/tcp", "perl ", "python ", "ruby ",
-                    "eval", "exec", "system("
+                    "eval", "exec", "system(",
                 ];
                 let script_lower = script.to_lowercase();
                 for pattern in &forbidden_patterns {
                     if script_lower.contains(pattern) {
                         tracing::error!("Automation Security: Blocked execution of dangerous script containing pattern '{}'", pattern);
-                        return Err(format!("Command injection blocked: contains forbidden pattern '{}'", pattern));
+                        return Err(format!(
+                            "Command injection blocked: contains forbidden pattern '{}'",
+                            pattern
+                        ));
                     }
                 }
 
@@ -75,7 +98,12 @@ impl ExecutionRuntime {
                     c
                 };
 
-                match cmd.stdout(Stdio::piped()).stderr(Stdio::piped()).output().await {
+                match cmd
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .output()
+                    .await
+                {
                     Ok(output) => {
                         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
                         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
@@ -85,10 +113,10 @@ impl ExecutionRuntime {
                             "stderr": stderr.trim()
                         }))
                     }
-                    Err(e) => Err(format!("Local shell execution failed: {}", e))
+                    Err(e) => Err(format!("Local shell execution failed: {}", e)),
                 }
             }
-            _ => Err(format!("Unsupported action type: {}", task.action_type))
+            _ => Err(format!("Unsupported action type: {}", task.action_type)),
         }
     }
 
@@ -129,4 +157,3 @@ mod tests {
         assert!(res.err().unwrap().contains("Command injection blocked"));
     }
 }
-

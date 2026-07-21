@@ -1,20 +1,49 @@
-use serde::{Deserialize, Serialize};
-use tokio::sync::broadcast;
-use std::sync::Arc;
 use futures::stream::StreamExt;
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use tokio::sync::broadcast;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AlfredEvent {
-    IncidentCreated { incident_id: String, priority: String, source: String },
-    IncidentResolved { incident_id: String, resolution_notes: String },
-    AiAnalysisRequested { incident_id: String },
-    AiAnalysisCompleted { incident_id: String, tags: Vec<String>, confidence: f64 },
-    ApprovalRequired { workflow_id: String, context: String },
-    WorkflowExecuted { workflow_id: String },
+    IncidentCreated {
+        incident_id: String,
+        priority: String,
+        source: String,
+    },
+    IncidentResolved {
+        incident_id: String,
+        resolution_notes: String,
+    },
+    AiAnalysisRequested {
+        incident_id: String,
+    },
+    AiAnalysisCompleted {
+        incident_id: String,
+        tags: Vec<String>,
+        confidence: f64,
+    },
+    ApprovalRequired {
+        workflow_id: String,
+        context: String,
+    },
+    WorkflowExecuted {
+        workflow_id: String,
+    },
     // People Engineering events
-    CheckInSubmitted { person_id: String, date: String },
-    SentimentAlert { person_id: String, stress_level: f64, confidence: f64 },
-    BlockerDetected { person_id: String, blocker_description: String, dependency: Option<String> },
+    CheckInSubmitted {
+        person_id: String,
+        date: String,
+    },
+    SentimentAlert {
+        person_id: String,
+        stress_level: f64,
+        confidence: f64,
+    },
+    BlockerDetected {
+        person_id: String,
+        blocker_description: String,
+        dependency: Option<String>,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -61,7 +90,7 @@ impl EventBus {
             let tx = this.sender.clone();
             let my_id = this.instance_id.clone();
             let client_clone = client.clone();
-            
+
             tokio::spawn(async move {
                 tracing::info!("EventBus: Connecting to Redis for Streams consumer group...");
                 if let Ok(mut conn) = client_clone.get_async_connection().await {
@@ -78,19 +107,20 @@ impl EventBus {
                     tracing::info!("EventBus: Stream consumer group 'alfred_consumers' verified. Polling for events...");
 
                     loop {
-                        let reply: Result<redis::Value, redis::RedisError> = redis::cmd("XREADGROUP")
-                            .arg("GROUP")
-                            .arg("alfred_consumers")
-                            .arg(&my_id)
-                            .arg("BLOCK")
-                            .arg("2000")
-                            .arg("COUNT")
-                            .arg("10")
-                            .arg("STREAMS")
-                            .arg("alfred_stream")
-                            .arg(">")
-                            .query_async(&mut conn)
-                            .await;
+                        let reply: Result<redis::Value, redis::RedisError> =
+                            redis::cmd("XREADGROUP")
+                                .arg("GROUP")
+                                .arg("alfred_consumers")
+                                .arg(&my_id)
+                                .arg("BLOCK")
+                                .arg("2000")
+                                .arg("COUNT")
+                                .arg("10")
+                                .arg("STREAMS")
+                                .arg("alfred_stream")
+                                .arg(">")
+                                .query_async(&mut conn)
+                                .await;
 
                         match reply {
                             Ok(redis::Value::Bulk(streams)) => {
@@ -102,16 +132,30 @@ impl EventBus {
                                                     if let redis::Value::Bulk(msg_data) = msg_val {
                                                         if msg_data.len() >= 2 {
                                                             let msg_id = match &msg_data[0] {
-                                                                redis::Value::Data(bytes) => String::from_utf8_lossy(bytes).into_owned(),
+                                                                redis::Value::Data(bytes) => {
+                                                                    String::from_utf8_lossy(bytes)
+                                                                        .into_owned()
+                                                                }
                                                                 _ => continue,
-                             };
-                                                            
-                                                            if let redis::Value::Bulk(fields) = &msg_data[1] {
-                                                                let mut event_payload: Option<String> = None;
+                                                            };
+
+                                                            if let redis::Value::Bulk(fields) =
+                                                                &msg_data[1]
+                                                            {
+                                                                let mut event_payload: Option<
+                                                                    String,
+                                                                > = None;
                                                                 for chunk in fields.chunks(2) {
                                                                     if chunk.len() == 2 {
                                                                         let key = match &chunk[0] {
-                                                                            redis::Value::Data(bytes) => std::str::from_utf8(bytes).unwrap_or(""),
+                                                                            redis::Value::Data(
+                                                                                bytes,
+                                                                            ) => {
+                                                                                std::str::from_utf8(
+                                                                                    bytes,
+                                                                                )
+                                                                                .unwrap_or("")
+                                                                            }
                                                                             _ => "",
                                                                         };
                                                                         if key == "event" {
@@ -123,18 +167,33 @@ impl EventBus {
                                                                         }
                                                                     }
                                                                 }
-                                                                
-                                                                if let Some(payload_str) = event_payload {
-                                                                    if let Ok(envelope) = serde_json::from_str::<EventEnvelope>(&payload_str) {
-                                                                        if envelope.sender_id != my_id {
+
+                                                                if let Some(payload_str) =
+                                                                    event_payload
+                                                                {
+                                                                    if let Ok(envelope) =
+                                                                        serde_json::from_str::<
+                                                                            EventEnvelope,
+                                                                        >(
+                                                                            &payload_str
+                                                                        )
+                                                                    {
+                                                                        if envelope.sender_id
+                                                                            != my_id
+                                                                        {
                                                                             tracing::info!("EventBus: Received external stream event from Redis: {:?}", envelope.event);
-                                                                            let _ = tx.send(envelope.event);
+                                                                            let _ = tx.send(
+                                                                                envelope.event,
+                                                                            );
                                                                         }
                                                                     }
                                                                 }
-                                                                
+
                                                                 // Acknowledge the message
-                                                                let _: Result<(), redis::RedisError> = redis::cmd("XACK")
+                                                                let _: Result<
+                                                                    (),
+                                                                    redis::RedisError,
+                                                                > = redis::cmd("XACK")
                                                                     .arg("alfred_stream")
                                                                     .arg("alfred_consumers")
                                                                     .arg(&msg_id)
@@ -172,7 +231,9 @@ impl EventBus {
         tracing::info!("EventBus Publishing: {:?}", event);
 
         // Always publish to the local channel first
-        let local_res = self.sender.send(event.clone())
+        let local_res = self
+            .sender
+            .send(event.clone())
             .map_err(|e| format!("Local broadcast send error: {}", e));
 
         // Publish to Redis Stream if configured
@@ -204,4 +265,3 @@ impl EventBus {
         self.sender.subscribe()
     }
 }
-

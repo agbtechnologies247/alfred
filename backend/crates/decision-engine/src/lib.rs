@@ -1,6 +1,6 @@
-pub mod rules;
-pub mod ai_rca;
 pub mod ai;
+pub mod ai_rca;
+pub mod rules;
 
 /// The Decision Engineering Engine analyzes context, risk, and confidence
 /// before invoking workflows or asking for human approval.

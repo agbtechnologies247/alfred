@@ -1,8 +1,6 @@
-use axum::{
-    Json, extract::State,
-};
-use serde_json::{json, Value};
 use crate::AppState;
+use axum::{extract::State, Json};
+use serde_json::{json, Value};
 
 pub async fn get_audit_log(State(state): State<AppState>) -> Json<Value> {
     let entries = state.governance.get_audit_log(50).await;
@@ -29,24 +27,58 @@ pub async fn submit_feedback(
     use feedback_engine::{FeedbackRecord, HumanDecision};
     let record = FeedbackRecord {
         id: uuid::Uuid::new_v4().to_string(),
-        decision_id: payload.get("decision_id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-        user_id: payload.get("user_id").and_then(|v| v.as_str()).unwrap_or("anonymous").to_string(),
-        user_role: payload.get("user_role").and_then(|v| v.as_str()).unwrap_or("engineer").to_string(),
-        action_type: payload.get("action_type").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-        ai_recommendation: payload.get("recommendation").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-        ai_confidence: payload.get("ai_confidence").and_then(|v| v.as_f64()).unwrap_or(0.0),
-        human_decision: match payload.get("decision").and_then(|v| v.as_str()).unwrap_or("approved") {
+        decision_id: payload
+            .get("decision_id")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string(),
+        user_id: payload
+            .get("user_id")
+            .and_then(|v| v.as_str())
+            .unwrap_or("anonymous")
+            .to_string(),
+        user_role: payload
+            .get("user_role")
+            .and_then(|v| v.as_str())
+            .unwrap_or("engineer")
+            .to_string(),
+        action_type: payload
+            .get("action_type")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string(),
+        ai_recommendation: payload
+            .get("recommendation")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string(),
+        ai_confidence: payload
+            .get("ai_confidence")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0),
+        human_decision: match payload
+            .get("decision")
+            .and_then(|v| v.as_str())
+            .unwrap_or("approved")
+        {
             "rejected" => HumanDecision::Rejected,
             "modified" => HumanDecision::Modified,
             _ => HumanDecision::Approved,
         },
-        rejection_reason: payload.get("reason").and_then(|v| v.as_str()).map(|s| s.to_string()),
-        environment: payload.get("environment").and_then(|v| v.as_str()).unwrap_or("production").to_string(),
+        rejection_reason: payload
+            .get("reason")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string()),
+        environment: payload
+            .get("environment")
+            .and_then(|v| v.as_str())
+            .unwrap_or("production")
+            .to_string(),
         outcome: None,
     };
     match state.feedback_engine.record_feedback(&record).await {
         Ok(id) => Json(json!({ "success": true, "feedback_id": id })),
-        Err(e) => Json(json!({ "success": false, "error": e }))
+        Err(e) => Json(json!({ "success": false, "error": e })),
     }
 }
 

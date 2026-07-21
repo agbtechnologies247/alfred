@@ -8,7 +8,12 @@ pub struct StorageEngine {
 }
 
 impl StorageEngine {
-    pub async fn new(pg_url: &str, neo4j_url: &str, neo4j_user: &str, neo4j_pass: &str) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn new(
+        pg_url: &str,
+        neo4j_url: &str,
+        neo4j_user: &str,
+        neo4j_pass: &str,
+    ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let pg = sqlx::postgres::PgPoolOptions::new()
             .max_connections(5)
             .connect(pg_url)
@@ -22,7 +27,8 @@ impl StorageEngine {
         sqlx::migrate!("./migrations").run(&pg).await?;
 
         // Seed default Tenant
-        let default_tenant_id = uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap();
+        let default_tenant_id =
+            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap();
         sqlx::query(
             "INSERT INTO tenants (id, name) VALUES ($1, 'Default Tenant') ON CONFLICT (id) DO NOTHING"
         )
@@ -32,7 +38,8 @@ impl StorageEngine {
 
         // Seed default admin User: admin / alfredpassword
         // Password hash: argon2id of 'alfredpassword'
-        let admin_pass_hash = "$argon2id$v=19$m=102400,t=2,p=8$YRDdQCnsbc1WTSXYLCW6ow$mn/gPmtc4zpGQpdf7HukVg";
+        let admin_pass_hash =
+            "$argon2id$v=19$m=102400,t=2,p=8$YRDdQCnsbc1WTSXYLCW6ow$mn/gPmtc4zpGQpdf7HukVg";
         let admin_id = uuid::Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap();
         sqlx::query(
             "INSERT INTO users (id, tenant_id, username, password_hash, role) VALUES ($1, $2, 'admin', $3, 'super_admin') ON CONFLICT (username) DO NOTHING"
@@ -56,12 +63,12 @@ impl StorageEngine {
 
         // Seed API key for start.ps1 tests
         let api_key_id = uuid::Uuid::parse_str("22222222-2222-2222-2222-222222222222").unwrap();
-        
+
         use blake2::{Blake2s256, Digest};
         let mut hasher = Blake2s256::new();
         hasher.update(b"sk_test_xxxxx");
         let hash_hex = format!("{:x}", hasher.finalize());
-        
+
         sqlx::query(
             "INSERT INTO api_keys (id, tenant_id, key_hash, type, scopes) VALUES ($1, $2, $3, 'test', $4) ON CONFLICT DO NOTHING"
         )
@@ -104,15 +111,28 @@ impl StorageEngine {
         let _ = graph.execute(
             neo4rs::query("CREATE CONSTRAINT incident_id IF NOT EXISTS FOR (i:Incident) REQUIRE i.id IS UNIQUE")
         ).await;
-        
-        let _ = graph.execute(
-            neo4rs::query("CREATE CONSTRAINT sop_id IF NOT EXISTS FOR (s:Sop) REQUIRE s.id IS UNIQUE")
-        ).await;
 
-        Ok(Self { pg_pool: Some(pg), graph_db: Some(graph) })
+        let _ = graph
+            .execute(neo4rs::query(
+                "CREATE CONSTRAINT sop_id IF NOT EXISTS FOR (s:Sop) REQUIRE s.id IS UNIQUE",
+            ))
+            .await;
+
+        Ok(Self {
+            pg_pool: Some(pg),
+            graph_db: Some(graph),
+        })
     }
 
-    pub async fn create_sop(&self, id: uuid::Uuid, parent_id: Option<uuid::Uuid>, version: i32, title: &str, content: &str, incident_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn create_sop(
+        &self,
+        id: uuid::Uuid,
+        parent_id: Option<uuid::Uuid>,
+        version: i32,
+        title: &str,
+        content: &str,
+        incident_id: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if let Some(pg) = &self.pg_pool {
             sqlx::query(
                 "INSERT INTO sops (id, parent_id, version, title, content, created_from_incident_id) VALUES ($1, $2, $3, $4, $5, $6)"
@@ -129,7 +149,10 @@ impl StorageEngine {
         Ok(())
     }
 
-    pub async fn log_unified_event(&self, event: &UnifiedEvent) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn log_unified_event(
+        &self,
+        event: &UnifiedEvent,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if let Some(pg) = &self.pg_pool {
             sqlx::query(
                 "INSERT INTO unified_events (event_id, timestamp, event_type, category, object_type, object_id, \
@@ -189,30 +212,44 @@ pub struct WebhookSubscription {
 }
 
 impl StorageEngine {
-    pub async fn get_all_webhooks(&self) -> Result<Vec<WebhookSubscription>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_all_webhooks(
+        &self,
+    ) -> Result<Vec<WebhookSubscription>, Box<dyn std::error::Error + Send + Sync>> {
         if let Some(pg) = &self.pg_pool {
-            let list = sqlx::query_as::<_, WebhookSubscription>("SELECT id, tenant_id, url, events, status FROM webhooks")
-                .fetch_all(pg)
-                .await?;
+            let list = sqlx::query_as::<_, WebhookSubscription>(
+                "SELECT id, tenant_id, url, events, status FROM webhooks",
+            )
+            .fetch_all(pg)
+            .await?;
             Ok(list)
         } else {
             Ok(Vec::new())
         }
     }
 
-    pub async fn create_webhook(&self, id: uuid::Uuid, url: &str, events: Vec<String>) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn create_webhook(
+        &self,
+        id: uuid::Uuid,
+        url: &str,
+        events: Vec<String>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if let Some(pg) = &self.pg_pool {
-            sqlx::query("INSERT INTO webhooks (id, url, events, status) VALUES ($1, $2, $3, 'active')")
-                .bind(id)
-                .bind(url)
-                .bind(&events)
-                .execute(pg)
-                .await?;
+            sqlx::query(
+                "INSERT INTO webhooks (id, url, events, status) VALUES ($1, $2, $3, 'active')",
+            )
+            .bind(id)
+            .bind(url)
+            .bind(&events)
+            .execute(pg)
+            .await?;
         }
         Ok(())
     }
 
-    pub async fn delete_webhook(&self, id: uuid::Uuid) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn delete_webhook(
+        &self,
+        id: uuid::Uuid,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if let Some(pg) = &self.pg_pool {
             sqlx::query("DELETE FROM webhooks WHERE id = $1")
                 .bind(id)

@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
 use ml_engine::{MlEngine, RiskScore};
 use ontology_engine::OntologyEngine;
+use serde::{Deserialize, Serialize};
 
 /// A proposed action to be simulated before execution
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -15,7 +15,7 @@ pub struct ProposedAction {
 pub struct SimulationResult {
     pub action: ProposedAction,
     pub risk_score: RiskScore,
-    pub estimated_blast_radius: u32,     // number of downstream entities affected
+    pub estimated_blast_radius: u32, // number of downstream entities affected
     pub estimated_affected_customers: u32,
     pub estimated_downtime_minutes: f64,
     pub estimated_cost_impact_usd: f64,
@@ -42,26 +42,35 @@ pub struct SimulationEngine {
 impl SimulationEngine {
     pub fn new() -> Self {
         tracing::info!("Simulation Engine initialized");
-        Self { ml: MlEngine::new() }
+        Self {
+            ml: MlEngine::new(),
+        }
     }
 
     /// Simulate the full impact of a proposed action before executing it
     /// This is the core of the Decision Engineering module
-    pub async fn simulate(&self, action: ProposedAction, ontology: &OntologyEngine) -> SimulationResult {
+    pub async fn simulate(
+        &self,
+        action: ProposedAction,
+        ontology: &OntologyEngine,
+    ) -> SimulationResult {
         tracing::info!(
             "Simulation: Evaluating '{}' on entity '{}'",
-            action.action_type, action.target_entity_id
+            action.action_type,
+            action.target_entity_id
         );
 
         // 1. Get impact radius from knowledge graph
-        let impact = ontology.get_impact_radius(&action.target_entity_id).await
+        let impact = ontology
+            .get_impact_radius(&action.target_entity_id)
+            .await
             .unwrap_or_else(|_| serde_json::json!({"affected_entities": [], "risk_score": 0.5}));
 
         let mut active_sessions_count = 0u64;
         if let Some(pg) = &ontology.storage.pg_pool {
             if let Ok(row) = sqlx::query("SELECT COUNT(*) as count FROM sessions")
                 .fetch_one(pg)
-                .await 
+                .await
             {
                 let count: i64 = sqlx::Row::get(&row, "count");
                 active_sessions_count = count as u64;
@@ -69,11 +78,15 @@ impl SimulationEngine {
         }
 
         let blast_radius = impact["affected_entities"]
-            .as_array().map(|a| a.len() as u32).unwrap_or(2);
+            .as_array()
+            .map(|a| a.len() as u32)
+            .unwrap_or(2);
         let affected_customers = if active_sessions_count > 0 {
             active_sessions_count as u32
         } else {
-            impact["estimated_affected_customers"].as_u64().unwrap_or(50) as u32
+            impact["estimated_affected_customers"]
+                .as_u64()
+                .unwrap_or(50) as u32
         };
 
         // 2. Compute ML risk score
@@ -90,10 +103,11 @@ impl SimulationEngine {
 
         let mut rate_per_min = 0.83;
         let client = reqwest::Client::new();
-        if let Ok(resp) = client.get("https://raw.githubusercontent.com/LGUG2Z/komiser/master/aws/pricing.json")
+        if let Ok(resp) = client
+            .get("https://raw.githubusercontent.com/LGUG2Z/komiser/master/aws/pricing.json")
             .timeout(std::time::Duration::from_millis(600))
             .send()
-            .await 
+            .await
         {
             if let Ok(json_val) = resp.json::<serde_json::Value>().await {
                 if let Some(rate) = json_val.get("t3.medium").and_then(|v| v.as_f64()) {

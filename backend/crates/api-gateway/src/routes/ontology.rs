@@ -1,10 +1,8 @@
-use axum::{
-    Json, extract::State, http::StatusCode,
-};
-use serde_json::{json, Value};
 use crate::AppState;
-use ontology_engine::{get_all_templates, GraphEntity, EntityType};
+use axum::{extract::State, http::StatusCode, Json};
 use event_bus::AlfredEvent;
+use ontology_engine::{get_all_templates, EntityType, GraphEntity};
+use serde_json::{json, Value};
 
 pub async fn get_topology(
     State(state): State<AppState>,
@@ -14,7 +12,9 @@ pub async fn get_topology(
     let mut edges = Vec::new();
 
     if let Some(graph) = &state.storage.graph_db {
-        let q_nodes = neo4rs::query("MATCH (n:Entity) RETURN n.id as id, n.name as name, n.entity_type as entity_type");
+        let q_nodes = neo4rs::query(
+            "MATCH (n:Entity) RETURN n.id as id, n.name as name, n.entity_type as entity_type",
+        );
         if let Ok(mut result) = graph.execute(q_nodes).await {
             while let Ok(Some(row)) = result.next().await {
                 let id_val: String = row.get("id").unwrap_or_default();
@@ -29,7 +29,9 @@ pub async fn get_topology(
             }
         }
 
-        let q_edges = neo4rs::query("MATCH (a:Entity)-[r]->(b:Entity) RETURN a.id as from, b.id as to, r.type as relation");
+        let q_edges = neo4rs::query(
+            "MATCH (a:Entity)-[r]->(b:Entity) RETURN a.id as from, b.id as to, r.type as relation",
+        );
         if let Ok(mut result) = graph.execute(q_edges).await {
             while let Ok(Some(row)) = result.next().await {
                 let from_val: String = row.get("from").unwrap_or_default();
@@ -49,12 +51,12 @@ pub async fn get_topology(
             json!({ "id": id.clone(), "type": "application", "name": "API Gateway", "status": "healthy" }),
             json!({ "id": "db-postgres", "type": "database", "name": "PostgreSQL", "status": "healthy" }),
             json!({ "id": "cache-redis", "type": "database", "name": "Redis", "status": "degraded" }),
-            json!({ "id": "eks-cluster", "type": "cluster", "name": "EKS Prod", "status": "healthy" })
+            json!({ "id": "eks-cluster", "type": "cluster", "name": "EKS Prod", "status": "healthy" }),
         ];
         edges = vec![
             json!({ "from": id.clone(), "to": "db-postgres", "relation": "DEPENDS_ON" }),
             json!({ "from": id.clone(), "to": "cache-redis", "relation": "DEPENDS_ON" }),
-            json!({ "from": id.clone(), "to": "eks-cluster", "relation": "HOSTED_ON" })
+            json!({ "from": id.clone(), "to": "eks-cluster", "relation": "HOSTED_ON" }),
         ];
     }
 
@@ -71,7 +73,7 @@ pub async fn get_impact_radius(
 ) -> Json<Value> {
     match state.ontology_engine.get_impact_radius(&id).await {
         Ok(result) => Json(result),
-        Err(e) => Json(json!({ "error": e }))
+        Err(e) => Json(json!({ "error": e })),
     }
 }
 
@@ -91,12 +93,17 @@ pub async fn simulate_ontology_event(
     Json(payload): Json<SimulateOntologyRequest>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let templates = get_all_templates();
-    let template = templates.iter().find(|t| t.id == payload.template_id).ok_or_else(|| {
-        (
-            StatusCode::BAD_REQUEST,
-            Json(json!({ "error": format!("Template id '{}' not found", payload.template_id) })),
-        )
-    })?;
+    let template = templates
+        .iter()
+        .find(|t| t.id == payload.template_id)
+        .ok_or_else(|| {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(
+                    json!({ "error": format!("Template id '{}' not found", payload.template_id) }),
+                ),
+            )
+        })?;
 
     let base_event = template.example_events.first().ok_or_else(|| {
         (
@@ -107,7 +114,9 @@ pub async fn simulate_ontology_event(
 
     let event_id = uuid::Uuid::new_v4();
     let timestamp = chrono::Utc::now();
-    let severity = payload.severity_override.unwrap_or_else(|| base_event.severity.clone());
+    let severity = payload
+        .severity_override
+        .unwrap_or_else(|| base_event.severity.clone());
 
     let db_event = storage_engine::UnifiedEvent {
         event_id,
@@ -129,12 +138,16 @@ pub async fn simulate_ontology_event(
     };
 
     // Log to DB
-    state.storage.log_unified_event(&db_event).await.map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({ "error": format!("Failed to log event: {}", e) })),
-        )
-    })?;
+    state
+        .storage
+        .log_unified_event(&db_event)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "error": format!("Failed to log event: {}", e) })),
+            )
+        })?;
 
     // Log to Neo4J representation (Graph Database)
     let graph_entity = GraphEntity::new(

@@ -1,4 +1,4 @@
-use event_bus::{EventBus, AlfredEvent};
+use event_bus::{AlfredEvent, EventBus};
 use reqwest::Client;
 use serde_json::json;
 
@@ -24,11 +24,22 @@ impl AlertEngine {
         let pd_key = self.pagerduty_integration_key.clone();
 
         tokio::spawn(async move {
-            tracing::info!("Alert Engine: Listening for incident and critical events on EventBus...");
+            tracing::info!(
+                "Alert Engine: Listening for incident and critical events on EventBus..."
+            );
             while let Ok(event) = rx.recv().await {
                 match &event {
-                    AlfredEvent::IncidentCreated { incident_id, priority, source } => {
-                        tracing::info!("Alert Engine: Critical Incident Created: ID={} priority={} source={}", incident_id, priority, source);
+                    AlfredEvent::IncidentCreated {
+                        incident_id,
+                        priority,
+                        source,
+                    } => {
+                        tracing::info!(
+                            "Alert Engine: Critical Incident Created: ID={} priority={} source={}",
+                            incident_id,
+                            priority,
+                            source
+                        );
 
                         if let Some(url) = &slack_url {
                             let payload = json!({
@@ -51,10 +62,17 @@ impl AlertEngine {
                                     "source": "A.L.F.R.E.D. alert-engine"
                                 }
                             });
-                            let _ = client.post("https://events.pagerduty.com/v2/enqueue").json(&payload).send().await;
+                            let _ = client
+                                .post("https://events.pagerduty.com/v2/enqueue")
+                                .json(&payload)
+                                .send()
+                                .await;
                         }
                     }
-                    AlfredEvent::IncidentResolved { incident_id, resolution_notes } => {
+                    AlfredEvent::IncidentResolved {
+                        incident_id,
+                        resolution_notes,
+                    } => {
                         tracing::info!("Alert Engine: Incident Resolved: ID={}", incident_id);
 
                         if let Some(url) = &slack_url {

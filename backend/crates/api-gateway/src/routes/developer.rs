@@ -1,10 +1,8 @@
-use axum::{
-    Json, extract::State,
-};
-use serde_json::{json, Value};
+use crate::routes::auth::{require_permission, AuthenticatedUser};
 use crate::AppState;
-use crate::routes::auth::{AuthenticatedUser, require_permission};
+use axum::{extract::State, Json};
 use event_bus::AlfredEvent;
+use serde_json::{json, Value};
 
 pub async fn get_api_keys(
     State(state): State<AppState>,
@@ -15,7 +13,7 @@ pub async fn get_api_keys(
             .bind(user.tenant_id)
             .fetch_all(pg)
             .await;
-            
+
         if let Ok(records) = rows {
             use sqlx::Row;
             let mut result = Vec::new();
@@ -23,11 +21,11 @@ pub async fn get_api_keys(
                 let created_at: chrono::DateTime<chrono::Utc> = rec.get("created_at");
                 let key_hash: String = rec.get("key_hash");
                 let masked = if key_hash.len() > 14 {
-                    format!("{}...{}", &key_hash[..8], &key_hash[key_hash.len()-4..])
+                    format!("{}...{}", &key_hash[..8], &key_hash[key_hash.len() - 4..])
                 } else {
                     key_hash.clone()
                 };
-                
+
                 result.push(json!({
                     "id": rec.get::<uuid::Uuid, _>("id").to_string(),
                     "name": format!("Key - {}", rec.get::<String, _>("type")),
@@ -55,7 +53,11 @@ pub async fn create_api_key(
         return Json(json!({ "success": false, "error": err_json["error"] }));
     }
 
-    let name = payload.get("name").and_then(|v| v.as_str()).unwrap_or("SRE Key").to_string();
+    let name = payload
+        .get("name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("SRE Key")
+        .to_string();
     let scopes_val = payload.get("scopes").and_then(|v| v.as_array());
     let mut scopes = Vec::new();
     if let Some(arr) = scopes_val {
@@ -72,7 +74,10 @@ pub async fn create_api_key(
     }
 
     let key_id = uuid::Uuid::new_v4();
-    let token = format!("sk_live_{}", uuid::Uuid::new_v4().to_string().replace("-", ""));
+    let token = format!(
+        "sk_live_{}",
+        uuid::Uuid::new_v4().to_string().replace("-", "")
+    );
 
     use blake2::{Blake2s256, Digest};
     let mut hasher = Blake2s256::new();
@@ -89,9 +94,11 @@ pub async fn create_api_key(
         .bind(&name)
         .bind(&scopes)
         .execute(pg).await;
-        
+
         if res.is_ok() {
-            return Json(json!({ "success": true, "id": key_id.to_string(), "token": token, "name": name, "scopes": scopes }));
+            return Json(
+                json!({ "success": true, "id": key_id.to_string(), "token": token, "name": name, "scopes": scopes }),
+            );
         }
     }
 
@@ -113,7 +120,12 @@ pub async fn delete_api_key(
     };
 
     if let Some(pg) = &state.storage.pg_pool {
-        if sqlx::query("DELETE FROM api_keys WHERE id = $1").bind(key_uuid).execute(pg).await.is_ok() {
+        if sqlx::query("DELETE FROM api_keys WHERE id = $1")
+            .bind(key_uuid)
+            .execute(pg)
+            .await
+            .is_ok()
+        {
             return Json(json!({ "success": true, "message": "API key revoked" }));
         }
     }
@@ -131,7 +143,9 @@ pub async fn create_developer_webhook(axum::Json(payload): axum::Json<Value>) ->
     Json(json!({ "success": true, "id": "wh-002", "url": url, "message": "Webhook created" }))
 }
 
-pub async fn delete_developer_webhook(axum::extract::Path(id): axum::extract::Path<String>) -> Json<Value> {
+pub async fn delete_developer_webhook(
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<Value> {
     Json(json!({ "success": true, "message": format!("Webhook {} deleted", id) }))
 }
 
@@ -149,13 +163,20 @@ pub async fn generate_rca(
     State(state): State<AppState>,
     axum::Json(payload): axum::Json<Value>,
 ) -> Json<Value> {
-    let description = payload.get("description").and_then(|v| v.as_str()).unwrap_or("Unknown incident");
-    
+    let description = payload
+        .get("description")
+        .and_then(|v| v.as_str())
+        .unwrap_or("Unknown incident");
+
     match state.ai_client.generate_rca_tags(description).await {
-        Ok(result) => Json(json!({ "success": true, "tags": result.tags, "confidence": result.confidence })),
+        Ok(result) => {
+            Json(json!({ "success": true, "tags": result.tags, "confidence": result.confidence }))
+        }
         Err(e) => {
             tracing::error!("AI Gateway error: {}", e);
-            Json(json!({ "success": false, "error": "AI Gateway failed", "tags": ["Network", "Timeout"], "confidence": 0.0 }))
+            Json(
+                json!({ "success": false, "error": "AI Gateway failed", "tags": ["Network", "Timeout"], "confidence": 0.0 }),
+            )
         }
     }
 }

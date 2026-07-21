@@ -33,19 +33,34 @@ impl OpenAiClient {
         let mut tags = Vec::new();
         let mut confidence = 0.85;
 
-        if desc_lower.contains("timeout") || desc_lower.contains("latency") || desc_lower.contains("slow") {
+        if desc_lower.contains("timeout")
+            || desc_lower.contains("latency")
+            || desc_lower.contains("slow")
+        {
             tags.push("Network".to_string());
             tags.push("Timeout".to_string());
         }
-        if desc_lower.contains("auth") || desc_lower.contains("login") || desc_lower.contains("password") || desc_lower.contains("mfa") {
+        if desc_lower.contains("auth")
+            || desc_lower.contains("login")
+            || desc_lower.contains("password")
+            || desc_lower.contains("mfa")
+        {
             tags.push("Identity".to_string());
             tags.push("Authentication".to_string());
         }
-        if desc_lower.contains("db") || desc_lower.contains("database") || desc_lower.contains("postgres") || desc_lower.contains("sql") {
+        if desc_lower.contains("db")
+            || desc_lower.contains("database")
+            || desc_lower.contains("postgres")
+            || desc_lower.contains("sql")
+        {
             tags.push("Database".to_string());
             tags.push("Query_Lock".to_string());
         }
-        if desc_lower.contains("disk") || desc_lower.contains("storage") || desc_lower.contains("space") || desc_lower.contains("full") {
+        if desc_lower.contains("disk")
+            || desc_lower.contains("storage")
+            || desc_lower.contains("space")
+            || desc_lower.contains("full")
+        {
             tags.push("Storage".to_string());
             tags.push("Disk_Full".to_string());
         }
@@ -64,9 +79,11 @@ impl OpenAiClient {
 impl AiProvider for OpenAiClient {
     async fn generate_rca_tags(&self, incident_description: &str) -> Result<RcaResult, String> {
         let is_placeholder = self.api_key.contains("placeholder");
-        
+
         if is_placeholder {
-            tracing::info!("AI Gateway: Placeholder API key detected. Using local keyword fallback engine.");
+            tracing::info!(
+                "AI Gateway: Placeholder API key detected. Using local keyword fallback engine."
+            );
             return Ok(self.local_keyword_rca(incident_description));
         }
 
@@ -90,16 +107,21 @@ impl AiProvider for OpenAiClient {
             "response_format": { "type": "json_object" }
         });
 
-        match self.client.post("https://api.openai.com/v1/chat/completions")
+        match self
+            .client
+            .post("https://api.openai.com/v1/chat/completions")
             .header("Authorization", format!("Bearer {}", self.api_key))
             .json(&body)
             .send()
-            .await 
+            .await
         {
             Ok(resp) => {
                 if !resp.status().is_success() {
                     let err = resp.text().await.unwrap_or_default();
-                    tracing::warn!("OpenAI Error response: {}. Falling back to local keyword fallback engine.", err);
+                    tracing::warn!(
+                        "OpenAI Error response: {}. Falling back to local keyword fallback engine.",
+                        err
+                    );
                     return Ok(self.local_keyword_rca(incident_description));
                 }
 
@@ -110,12 +132,15 @@ impl AiProvider for OpenAiClient {
                         }
                     }
                 }
-                
+
                 tracing::warn!("Failed to parse OpenAI JSON response. Falling back to local keyword fallback engine.");
                 Ok(self.local_keyword_rca(incident_description))
             }
             Err(e) => {
-                tracing::warn!("OpenAI request failed: {}. Falling back to local keyword fallback engine.", e);
+                tracing::warn!(
+                    "OpenAI request failed: {}. Falling back to local keyword fallback engine.",
+                    e
+                );
                 Ok(self.local_keyword_rca(incident_description))
             }
         }

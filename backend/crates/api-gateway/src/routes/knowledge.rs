@@ -1,9 +1,7 @@
-use axum::{
-    Json, extract::State,
-};
-use serde_json::{json, Value};
-use crate::AppState;
 use crate::routes::auth::AuthenticatedUser;
+use crate::AppState;
+use axum::{extract::State, Json};
+use serde_json::{json, Value};
 
 pub async fn get_sops(
     State(state): State<AppState>,
@@ -14,7 +12,7 @@ pub async fn get_sops(
             .bind(user.tenant_id)
             .fetch_all(pg)
             .await;
-            
+
         if let Ok(records) = rows {
             use sqlx::Row;
             let mut result = Vec::new();
@@ -51,14 +49,17 @@ pub async fn create_sop(
     axum::Json(payload): axum::Json<CreateSopRequest>,
 ) -> Json<Value> {
     let sop_id = uuid::Uuid::new_v4();
-    let _ = state.storage.create_sop(
-        sop_id,
-        None,
-        1,
-        &payload.title,
-        &payload.content,
-        &payload.incident_id,
-    ).await;
+    let _ = state
+        .storage
+        .create_sop(
+            sop_id,
+            None,
+            1,
+            &payload.title,
+            &payload.content,
+            &payload.incident_id,
+        )
+        .await;
 
     Json(json!({ "success": true, "sop_id": sop_id.to_string() }))
 }

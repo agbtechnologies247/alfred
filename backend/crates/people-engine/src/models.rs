@@ -1,6 +1,6 @@
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::{DateTime, Utc, NaiveDate};
 
 // ── Core Entities ──────────────────────────────────────────────────────────────
 
@@ -91,7 +91,7 @@ pub struct TimelineEvent {
     pub id: Uuid,
     pub person_id: Uuid,
     pub timestamp: DateTime<Utc>,
-    pub event_type: String,       // login, deployment, incident, standup, checkin, meeting, code_commit
+    pub event_type: String, // login, deployment, incident, standup, checkin, meeting, code_commit
     pub description: String,
     pub linked_entity_id: Option<String>,
     pub metadata: serde_json::Value,
@@ -103,11 +103,11 @@ pub struct TimelineEvent {
 pub struct SentimentResult {
     pub person_id: Uuid,
     pub timestamp: DateTime<Utc>,
-    pub stress_level: f64,        // 0.0 (calm) - 1.0 (extreme stress)
+    pub stress_level: f64, // 0.0 (calm) - 1.0 (extreme stress)
     pub confidence: f64,
     pub emotion: Emotion,
     pub burnout_risk: BurnoutRisk,
-    pub triggers: Vec<String>,    // detected keywords/phrases
+    pub triggers: Vec<String>, // detected keywords/phrases
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -137,12 +137,12 @@ pub enum BurnoutRisk {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BehaviourProfile {
     pub person_id: Uuid,
-    pub focus_score: f64,            // 0-100
-    pub collaboration_score: f64,    // 0-100
-    pub workload_score: f64,         // 0-100 (higher = heavier)
-    pub knowledge_sharing_score: f64,// 0-100
-    pub risk_pattern: String,        // "stable", "overloaded", "isolated", "at_risk"
-    pub working_style: String,       // "deep_focus", "collaborative", "responsive", "firefighter"
+    pub focus_score: f64,             // 0-100
+    pub collaboration_score: f64,     // 0-100
+    pub workload_score: f64,          // 0-100 (higher = heavier)
+    pub knowledge_sharing_score: f64, // 0-100
+    pub risk_pattern: String,         // "stable", "overloaded", "isolated", "at_risk"
+    pub working_style: String,        // "deep_focus", "collaborative", "responsive", "firefighter"
     pub recommendations: Vec<String>,
 }
 
@@ -156,7 +156,7 @@ pub struct PeopleInsights {
     pub avg_mood_score: f64,
     pub avg_focus_score: f64,
     pub avg_collaboration_score: f64,
-    pub burnout_risk_count: u32,     // persons with high/critical burnout risk
+    pub burnout_risk_count: u32, // persons with high/critical burnout risk
     pub checkins_today: u32,
     pub escalation_count_7d: u32,
     pub knowledge_gap_count: u32,
@@ -181,7 +181,7 @@ pub struct CheckInRequest {
 #[derive(Debug, Deserialize)]
 pub struct ConversationRequest {
     pub person_id: Uuid,
-    pub source: String,       // "slack", "teams", "email", "standup"
+    pub source: String, // "slack", "teams", "email", "standup"
     pub message: String,
 }
 

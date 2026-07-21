@@ -1,29 +1,27 @@
-use axum::{
-    Json, extract::State,
-};
-use serde_json::{json, Value};
-use crate::AppState;
 use crate::routes::auth::AuthenticatedUser;
-use prometheus::{Registry, Counter, Gauge, Encoder, TextEncoder};
+use crate::AppState;
+use axum::{extract::State, Json};
 use lazy_static::lazy_static;
+use prometheus::{Counter, Encoder, Gauge, Registry, TextEncoder};
+use serde_json::{json, Value};
 
 lazy_static! {
     pub static ref REGISTRY: Registry = Registry::new();
-    
     pub static ref TELEMETRY_REQUESTS_TOTAL: Counter = Counter::new(
         "alfred_telemetry_requests_total",
         "Total number of telemetry requests received"
-    ).unwrap();
-    
+    )
+    .unwrap();
     pub static ref SYSTEM_CPU_USAGE: Gauge = Gauge::new(
         "alfred_system_cpu_usage_ratio",
         "System CPU usage percentage"
-    ).unwrap();
-    
+    )
+    .unwrap();
     pub static ref SYSTEM_MEM_USAGE: Gauge = Gauge::new(
         "alfred_system_memory_usage_bytes",
         "System used memory in bytes"
-    ).unwrap();
+    )
+    .unwrap();
 }
 
 pub fn register_custom_metrics() {
@@ -33,39 +31,36 @@ pub fn register_custom_metrics() {
 }
 
 pub async fn get_prometheus_metrics() -> impl axum::response::IntoResponse {
-    use sysinfo::{System, RefreshKind, CpuRefreshKind, MemoryRefreshKind};
-    
+    use sysinfo::{CpuRefreshKind, MemoryRefreshKind, RefreshKind, System};
+
     let mut sys = System::new_with_specifics(
         RefreshKind::new()
             .with_cpu(CpuRefreshKind::everything())
-            .with_memory(MemoryRefreshKind::everything())
+            .with_memory(MemoryRefreshKind::everything()),
     );
     sys.refresh_all();
 
     let cpu_usage = sys.global_cpu_info().cpu_usage() as f64;
     let used_mem = sys.used_memory() as f64;
-    
+
     SYSTEM_CPU_USAGE.set(cpu_usage);
     SYSTEM_MEM_USAGE.set(used_mem);
-    
+
     let encoder = TextEncoder::new();
     let metric_families = REGISTRY.gather();
     let mut buffer = vec![];
     let _ = encoder.encode(&metric_families, &mut buffer);
-    
-    (
-        [("content-type", "text/plain; version=0.0.4")],
-        buffer
-    )
+
+    ([("content-type", "text/plain; version=0.0.4")], buffer)
 }
 
 pub async fn get_monitoring_kpis() -> Json<Value> {
-    use sysinfo::{System, RefreshKind, CpuRefreshKind, MemoryRefreshKind};
-    
+    use sysinfo::{CpuRefreshKind, MemoryRefreshKind, RefreshKind, System};
+
     let mut sys = System::new_with_specifics(
         RefreshKind::new()
             .with_cpu(CpuRefreshKind::everything())
-            .with_memory(MemoryRefreshKind::everything())
+            .with_memory(MemoryRefreshKind::everything()),
     );
     // A quick sleep is required to get a non-zero CPU delta reading
     tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;

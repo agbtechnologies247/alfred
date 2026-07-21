@@ -1,10 +1,8 @@
-use axum::{
-    Json, extract::State,
-};
-use serde_json::{json, Value};
-use crate::AppState;
 use crate::routes::auth::AuthenticatedUser;
+use crate::AppState;
+use axum::{extract::State, Json};
 use event_bus::AlfredEvent;
+use serde_json::{json, Value};
 
 pub async fn get_incidents(
     State(state): State<AppState>,
@@ -15,7 +13,7 @@ pub async fn get_incidents(
             .bind(user.tenant_id)
             .fetch_all(pg)
             .await;
-            
+
         if let Ok(records) = rows {
             use sqlx::Row;
             let mut result = Vec::new();
@@ -36,7 +34,7 @@ pub async fn get_incidents(
             }
         }
     }
-    
+
     // Fallback if DB is empty or fails
     Json(json!([
         { "id": "INC-1042", "status": "Active", "priority": "P1", "title": "CoreDNS CrashLoop BackOff", "layer": "Layer 5", "time": "10 mins ago", "aiConfidence": "98%", "tags": ["Kubernetes", "DNS", "Critical", "Auto Fix Available"] }
@@ -53,11 +51,12 @@ pub async fn get_incident_metrics(
 
     if let Some(pg) = &state.storage.pg_pool {
         use sqlx::Row;
-        let rows_active = sqlx::query("SELECT priority, status FROM incidents WHERE tenant_id = $1")
-            .bind(user.tenant_id)
-            .fetch_all(pg)
-            .await;
-            
+        let rows_active =
+            sqlx::query("SELECT priority, status FROM incidents WHERE tenant_id = $1")
+                .bind(user.tenant_id)
+                .fetch_all(pg)
+                .await;
+
         if let Ok(records) = rows_active {
             for rec in records {
                 let priority: String = rec.get("priority");
@@ -99,7 +98,7 @@ pub async fn create_incident(
     axum::Json(payload): axum::Json<CreateIncidentRequest>,
 ) -> Json<Value> {
     let incident_id = uuid::Uuid::new_v4();
-    
+
     if let Some(pg) = &state.storage.pg_pool {
         let _ = sqlx::query(
             "INSERT INTO incidents (id, tenant_id, title, priority, source, status) VALUES ($1, $2, $3, $4, $5, 'Active')"

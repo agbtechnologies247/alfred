@@ -40,15 +40,18 @@ impl FeedbackEngine {
         let id = Uuid::new_v4().to_string();
         tracing::info!(
             "Feedback: User '{}' ({}) {:?} AI recommendation '{}' for decision={}",
-            record.user_id, record.user_role, record.human_decision,
-            record.ai_recommendation, record.decision_id
+            record.user_id,
+            record.user_role,
+            record.human_decision,
+            record.ai_recommendation,
+            record.decision_id
         );
 
         if let Some(pg) = &self.storage.pg_pool {
             sqlx::query(
                 "INSERT INTO human_feedback (id, decision_id, user_id, user_role, action_type, \
                  ai_recommendation, ai_confidence, human_decision, rejection_reason, environment) \
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
             )
             .bind(uuid::Uuid::parse_str(&id).unwrap())
             .bind(&record.decision_id)
@@ -60,7 +63,8 @@ impl FeedbackEngine {
             .bind(format!("{:?}", record.human_decision))
             .bind(&record.rejection_reason)
             .bind(&record.environment)
-            .execute(pg).await
+            .execute(pg)
+            .await
             .map_err(|e| e.to_string())?;
         }
 
@@ -74,10 +78,11 @@ impl FeedbackEngine {
             let result = sqlx::query(
                 "SELECT COUNT(*) FILTER (WHERE human_decision = 'Approved') as approved, \
                  COUNT(*) as total \
-                 FROM human_feedback WHERE action_type = $1"
+                 FROM human_feedback WHERE action_type = $1",
             )
             .bind(action_type)
-            .fetch_one(pg).await;
+            .fetch_one(pg)
+            .await;
 
             if let Ok(row) = result {
                 use sqlx::Row;
@@ -95,10 +100,11 @@ impl FeedbackEngine {
         if let Some(pg) = &self.storage.pg_pool {
             let rows = sqlx::query(
                 "SELECT id, decision_id, user_role, action_type, human_decision, created_at \
-                 FROM human_feedback ORDER BY created_at DESC LIMIT $1"
+                 FROM human_feedback ORDER BY created_at DESC LIMIT $1",
             )
             .bind(limit)
-            .fetch_all(pg).await;
+            .fetch_all(pg)
+            .await;
 
             if let Ok(records) = rows {
                 use sqlx::Row;

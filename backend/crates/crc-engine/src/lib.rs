@@ -1,4 +1,4 @@
-use event_bus::{EventBus, AlfredEvent};
+use event_bus::{AlfredEvent, EventBus};
 
 pub struct CrcValidator;
 
@@ -24,7 +24,13 @@ impl CrcValidator {
     }
 
     /// Validate the frame data check sequence against expected CRC
-    pub fn validate_frame(&self, host: &str, data: &[u8], expected_crc: u32, event_bus: &EventBus) -> bool {
+    pub fn validate_frame(
+        &self,
+        host: &str,
+        data: &[u8],
+        expected_crc: u32,
+        event_bus: &EventBus,
+    ) -> bool {
         let computed = self.compute_crc32(data);
         let is_valid = computed == expected_crc;
         if !is_valid {
@@ -32,10 +38,14 @@ impl CrcValidator {
                 "CRC Engine: Frame check sequence mismatch on {}! Computed: 0x{:08X}, Expected: 0x{:08X}",
                 host, computed, expected_crc
             );
-            
+
             let event = AlfredEvent::AiAnalysisCompleted {
                 incident_id: format!("crc-check-{}", host),
-                tags: vec!["CRC_Error".to_string(), "Layer_2".to_string(), host.to_string()],
+                tags: vec![
+                    "CRC_Error".to_string(),
+                    "Layer_2".to_string(),
+                    host.to_string(),
+                ],
                 confidence: 0.99,
             };
             let _ = event_bus.publish(event);
@@ -80,4 +90,3 @@ mod tests {
         assert!(!validator.validate_frame("host-2", data, 0x12345678, &event_bus));
     }
 }
-

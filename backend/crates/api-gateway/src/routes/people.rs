@@ -1,8 +1,9 @@
+use crate::AppState;
 use axum::{
-    Json, extract::{State, Path},
+    extract::{Path, State},
+    Json,
 };
 use serde_json::{json, Value};
-use crate::AppState;
 
 pub async fn get_all_people(State(state): State<AppState>) -> Json<Value> {
     let persons = state.people_engine.get_all_persons().await;
@@ -79,10 +80,12 @@ pub async fn submit_checkin(
 
         match state.people_engine.record_checkin(&req).await {
             Ok(checkin) => {
-                let _ = state.event_bus.publish(event_bus::AlfredEvent::CheckInSubmitted {
-                    person_id: pid.to_string(),
-                    date: checkin.date.to_string(),
-                });
+                let _ = state
+                    .event_bus
+                    .publish(event_bus::AlfredEvent::CheckInSubmitted {
+                        person_id: pid.to_string(),
+                        date: checkin.date.to_string(),
+                    });
 
                 return Json(json!({ "success": true, "checkin_id": checkin.id.to_string() }));
             }

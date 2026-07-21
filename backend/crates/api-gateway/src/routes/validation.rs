@@ -1,10 +1,8 @@
-use axum::{
-    Json, extract::State,
-};
-use serde_json::{json, Value};
 use crate::AppState;
-use uuid::Uuid;
+use axum::{extract::State, Json};
 use chrono::Utc;
+use serde_json::{json, Value};
+use uuid::Uuid;
 
 #[derive(Debug, serde::Deserialize)]
 pub struct ValidationRunRequest {
@@ -500,7 +498,11 @@ pub async fn run_validation_scenario(
         actor: "system_validator".to_string(),
         team: Some("Corporate IT".to_string()),
         environment: "Production".to_string(),
-        severity: if risk_score > 60 { "high".to_string() } else { "info".to_string() },
+        severity: if risk_score > 60 {
+            "high".to_string()
+        } else {
+            "info".to_string()
+        },
         status: "success".to_string(),
         before_state: json!({ "scenario_id": scenario_id, "active": false }),
         after_state: json!({ "scenario_id": scenario_id, "active": true, "result": "passed" }),
@@ -526,9 +528,7 @@ pub async fn run_validation_scenario(
     }))
 }
 
-pub async fn get_executive_metrics(
-    State(_state): State<AppState>,
-) -> Json<Value> {
+pub async fn get_executive_metrics(State(_state): State<AppState>) -> Json<Value> {
     // Computes dynamic, enterprise-grade KPIs for ED Corporation Global
     Json(json!({
         "corporation": "ED Corporation Global",

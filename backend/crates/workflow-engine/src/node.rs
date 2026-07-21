@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
 use async_trait::async_trait;
-use serde_json::Value;
 use automation_engine::{AutomationTask, ExecutionRuntime};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum NodeType {
@@ -133,7 +133,10 @@ mod tests {
 
         let ctx = json!({ "prior_step": { "status": "done" } });
         let result = node.execute(&ctx).await;
-        assert!(result.is_ok(), "Local action node should execute successfully");
+        assert!(
+            result.is_ok(),
+            "Local action node should execute successfully"
+        );
 
         let val = result.unwrap();
         assert_eq!(val["status"], "success");

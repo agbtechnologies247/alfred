@@ -1,8 +1,6 @@
-use axum::{
-    Json, extract::State,
-};
-use serde_json::{json, Value};
 use crate::AppState;
+use axum::{extract::State, Json};
+use serde_json::{json, Value};
 
 pub async fn get_decisions(State(state): State<AppState>) -> Json<Value> {
     use sqlx::Row;
@@ -10,7 +8,7 @@ pub async fn get_decisions(State(state): State<AppState>) -> Json<Value> {
     let ml_forecast = state.ml_engine.forecast_capacity("orders-prod", db_usage);
     let days = ml_forecast["days_to_90pct_capacity"].as_u64().unwrap_or(10);
     let rec_action = ml_forecast["recommendation"].as_str().unwrap_or("MONITOR");
-    
+
     let mut recommendations = vec![
         json!({
             "id": "REC-1",
@@ -35,11 +33,13 @@ pub async fn get_decisions(State(state): State<AppState>) -> Json<Value> {
             "metric": "Improvement",
             "actionText": "View Blueprint",
             "iconType": "brain"
-        })
+        }),
     ];
 
     if let Some(pg) = &state.storage.pg_pool {
-        let count = sqlx::query("SELECT COUNT(*) FROM human_feedback").fetch_one(pg).await;
+        let count = sqlx::query("SELECT COUNT(*) FROM human_feedback")
+            .fetch_one(pg)
+            .await;
         if let Ok(row) = count {
             let total_feedback: i64 = row.get(0);
             if total_feedback > 0 {
@@ -96,10 +96,21 @@ pub async fn simulate_action(
 ) -> Json<Value> {
     use simulation_engine::ProposedAction;
     let action = ProposedAction {
-        action_type: payload.get("action_type").and_then(|v| v.as_str()).unwrap_or("restart_service").to_string(),
-        target_entity_id: payload.get("target_entity_id").and_then(|v| v.as_str()).unwrap_or("unknown").to_string(),
+        action_type: payload
+            .get("action_type")
+            .and_then(|v| v.as_str())
+            .unwrap_or("restart_service")
+            .to_string(),
+        target_entity_id: payload
+            .get("target_entity_id")
+            .and_then(|v| v.as_str())
+            .unwrap_or("unknown")
+            .to_string(),
         payload: payload.get("payload").cloned().unwrap_or(json!({})),
     };
-    let result = state.simulation_engine.simulate(action, &state.ontology_engine).await;
+    let result = state
+        .simulation_engine
+        .simulate(action, &state.ontology_engine)
+        .await;
     Json(serde_json::to_value(result).unwrap_or(json!({ "error": "simulation failed" })))
 }

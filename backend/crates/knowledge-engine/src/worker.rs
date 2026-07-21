@@ -1,5 +1,5 @@
 use crate::KnowledgeEngine;
-use event_bus::{EventBus, AlfredEvent};
+use event_bus::{AlfredEvent, EventBus};
 use tokio::task;
 
 impl KnowledgeEngine {
@@ -11,14 +11,27 @@ impl KnowledgeEngine {
             loop {
                 if let Ok(event) = rx.recv().await {
                     match event {
-                        AlfredEvent::IncidentResolved { incident_id, resolution_notes, .. } => {
-                            tracing::info!("Knowledge Engine received IncidentResolved for {}", incident_id);
-                            
+                        AlfredEvent::IncidentResolved {
+                            incident_id,
+                            resolution_notes,
+                            ..
+                        } => {
+                            tracing::info!(
+                                "Knowledge Engine received IncidentResolved for {}",
+                                incident_id
+                            );
+
                             // Extract title or default
                             let title = format!("Resolution for Incident {}", incident_id);
-                            let steps = resolution_notes.split('\n').map(|s| s.to_string()).collect();
+                            let steps = resolution_notes
+                                .split('\n')
+                                .map(|s| s.to_string())
+                                .collect();
 
-                            if let Err(e) = self.learn_from_incident(&incident_id, &title, steps, None).await {
+                            if let Err(e) = self
+                                .learn_from_incident(&incident_id, &title, steps, None)
+                                .await
+                            {
                                 tracing::error!("Failed to generate SOP: {}", e);
                             }
                         }

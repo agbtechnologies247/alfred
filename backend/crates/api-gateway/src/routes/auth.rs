@@ -1,17 +1,16 @@
+use crate::AppState;
+use argon2::{
+    password_hash::{PasswordHash, PasswordVerifier},
+    Argon2,
+};
 use axum::{
-    Json, extract::State,
+    extract::State,
+    http::{Request, StatusCode},
     middleware::Next,
     response::Response,
-    http::{Request, StatusCode},
+    Json,
 };
 use serde_json::{json, Value};
-use argon2::{
-    password_hash::{
-        PasswordHash, PasswordVerifier,
-    },
-    Argon2
-};
-use crate::AppState;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct AuthenticatedUser {
@@ -21,13 +20,18 @@ pub struct AuthenticatedUser {
     pub role: String,
 }
 
-pub fn require_permission(user: &AuthenticatedUser, allowed_roles: &[&str]) -> Result<(), (StatusCode, Json<Value>)> {
+pub fn require_permission(
+    user: &AuthenticatedUser,
+    allowed_roles: &[&str],
+) -> Result<(), (StatusCode, Json<Value>)> {
     if allowed_roles.contains(&user.role.as_str()) {
         Ok(())
     } else {
         Err((
             StatusCode::FORBIDDEN,
-            Json(json!({ "success": false, "error": format!("Access Denied: role '{}' lacks required permissions", user.role) }))
+            Json(
+                json!({ "success": false, "error": format!("Access Denied: role '{}' lacks required permissions", user.role) }),
+            ),
         ))
     }
 }
@@ -44,10 +48,12 @@ pub async fn auth_middleware(
 
     let token = match auth_header {
         Some(auth) if auth.starts_with("Bearer ") => &auth[7..],
-        _ => return Err((
-            StatusCode::UNAUTHORIZED,
-            Json(json!({ "error": "Missing or invalid authorization header" })),
-        )),
+        _ => {
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                Json(json!({ "error": "Missing or invalid authorization header" })),
+            ))
+        }
     };
 
     let mut authenticated_user = None;
@@ -59,12 +65,12 @@ pub async fn auth_middleware(
         hasher.update(token.as_bytes());
         let hash_hex = format!("{:x}", hasher.finalize());
 
-        if let Ok(Some(row)) = sqlx::query(
-            "SELECT tenant_id, type, scopes FROM api_keys WHERE key_hash = $1"
-        )
-        .bind(&hash_hex)
-        .fetch_optional(pg)
-        .await {
+        if let Ok(Some(row)) =
+            sqlx::query("SELECT tenant_id, type, scopes FROM api_keys WHERE key_hash = $1")
+                .bind(&hash_hex)
+                .fetch_optional(pg)
+                .await
+        {
             use sqlx::Row;
             let tenant_id: uuid::Uuid = row.get("tenant_id");
             let scopes: Vec<String> = row.get("scopes");
@@ -72,7 +78,9 @@ pub async fn auth_middleware(
                 user_id: uuid::Uuid::new_v4(),
                 username: format!("api_key_{}", row.get::<String, _>("type")),
                 tenant_id,
-                role: if scopes.contains(&"admin".to_string()) || scopes.contains(&"incident.*".to_string()) {
+                role: if scopes.contains(&"admin".to_string())
+                    || scopes.contains(&"incident.*".to_string())
+                {
                     "super_admin".to_string()
                 } else {
                     "sr_engineer".to_string()
@@ -88,15 +96,17 @@ pub async fn auth_middleware(
                 "SELECT s.tenant_id, s.user_id, u.username, u.role, s.expires_at \
                  FROM sessions s \
                  JOIN users u ON s.user_id = u.id \
-                 WHERE s.token = $1"
+                 WHERE s.token = $1",
             )
             .bind(token)
             .fetch_optional(pg)
             .await
-            .map_err(|e| (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "error": format!("Database error: {}", e) })),
-            ))?;
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({ "error": format!("Database error: {}", e) })),
+                )
+            })?;
 
             if let Some(row) = session_opt {
                 use sqlx::Row;
@@ -128,22 +138,37 @@ pub async fn login(
     State(state): State<AppState>,
     axum::Json(payload): axum::Json<Value>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let username = payload.get("username").and_then(|v| v.as_str()).ok_or_else(|| {
-        (StatusCode::BAD_REQUEST, Json(json!({ "error": "Missing username" })))
-    })?;
-    let password = payload.get("password").and_then(|v| v.as_str()).ok_or_else(|| {
-        (StatusCode::BAD_REQUEST, Json(json!({ "error": "Missing password" })))
-    })?;
+    let username = payload
+        .get("username")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(json!({ "error": "Missing username" })),
+            )
+        })?;
+    let password = payload
+        .get("password")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(json!({ "error": "Missing password" })),
+            )
+        })?;
 
     if let Some(pg) = &state.storage.pg_pool {
         let user_opt = sqlx::query(
-            "SELECT id, tenant_id, username, password_hash, role FROM users WHERE username = $1"
+            "SELECT id, tenant_id, username, password_hash, role FROM users WHERE username = $1",
         )
         .bind(username)
         .fetch_optional(pg)
         .await
         .map_err(|e| {
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": format!("Database error: {}", e) })))
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "error": format!("Database error: {}", e) })),
+            )
         })?;
 
         if let Some(row) = user_opt {
@@ -156,10 +181,16 @@ pub async fn login(
             // Verify password hash
             let parsed_hash = PasswordHash::new(&db_password_hash).map_err(|e| {
                 tracing::error!("Failed to parse password hash from DB: {}", e);
-                (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": "Internal authentication error" })))
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({ "error": "Internal authentication error" })),
+                )
             })?;
-            
-            if Argon2::default().verify_password(password.as_bytes(), &parsed_hash).is_ok() {
+
+            if Argon2::default()
+                .verify_password(password.as_bytes(), &parsed_hash)
+                .is_ok()
+            {
                 let token = uuid::Uuid::new_v4().to_string();
                 let expires_at = chrono::Utc::now() + chrono::Duration::hours(24);
 
@@ -189,5 +220,8 @@ pub async fn login(
         }
     }
 
-    Err((StatusCode::UNAUTHORIZED, Json(json!({ "error": "Invalid username or password" }))))
+    Err((
+        StatusCode::UNAUTHORIZED,
+        Json(json!({ "error": "Invalid username or password" })),
+    ))
 }

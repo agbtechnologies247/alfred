@@ -1,7 +1,7 @@
 use crate::models::*;
 use crate::sentiment::SentimentAnalyzer;
-use storage_engine::StorageEngine;
 use chrono::Utc;
+use storage_engine::StorageEngine;
 use uuid::Uuid;
 
 /// People Engineering Engine — the core orchestrator for organizational intelligence.
@@ -61,10 +61,14 @@ impl PeopleEngine {
         if let Some(blockers) = &checkin.blockers {
             if !blockers.is_empty() {
                 let sentiment = SentimentAnalyzer::analyze(checkin.person_id, blockers);
-                if sentiment.burnout_risk == BurnoutRisk::High || sentiment.burnout_risk == BurnoutRisk::Critical {
+                if sentiment.burnout_risk == BurnoutRisk::High
+                    || sentiment.burnout_risk == BurnoutRisk::Critical
+                {
                     tracing::warn!(
                         "People: Burnout risk detected for person {} — stress={:.2}, emotion={:?}",
-                        checkin.person_id, sentiment.stress_level, sentiment.emotion
+                        checkin.person_id,
+                        sentiment.stress_level,
+                        sentiment.emotion
                     );
                 }
             }
@@ -72,7 +76,10 @@ impl PeopleEngine {
 
         tracing::info!(
             "People: Check-in recorded for person {} ({:?}), mood={:?}, has_blockers={}",
-            checkin.person_id, checkin.check_in_type, checkin.mood, checkin.blockers.is_some()
+            checkin.person_id,
+            checkin.check_in_type,
+            checkin.mood,
+            checkin.blockers.is_some()
         );
 
         Ok(checkin)
@@ -91,42 +98,58 @@ impl PeopleEngine {
 
             if let Ok(records) = rows {
                 use sqlx::Row;
-                return records.iter().map(|r| TimelineEvent {
-                    id: r.get("id"),
-                    person_id: r.get("person_id"),
-                    timestamp: r.get("timestamp"),
-                    event_type: r.get("event_type"),
-                    description: r.get("description"),
-                    linked_entity_id: r.try_get("linked_entity_id").ok(),
-                    metadata: r.try_get("metadata").unwrap_or(serde_json::json!({})),
-                }).collect();
+                return records
+                    .iter()
+                    .map(|r| TimelineEvent {
+                        id: r.get("id"),
+                        person_id: r.get("person_id"),
+                        timestamp: r.get("timestamp"),
+                        event_type: r.get("event_type"),
+                        description: r.get("description"),
+                        linked_entity_id: r.try_get("linked_entity_id").ok(),
+                        metadata: r.try_get("metadata").unwrap_or(serde_json::json!({})),
+                    })
+                    .collect();
             }
         }
 
         // Mock fallback
         vec![
             TimelineEvent {
-                id: Uuid::new_v4(), person_id, timestamp: Utc::now(),
-                event_type: "login".into(), description: "Logged into A.L.F.R.E.D. platform".into(),
-                linked_entity_id: None, metadata: serde_json::json!({"ip": "192.168.1.50"}),
+                id: Uuid::new_v4(),
+                person_id,
+                timestamp: Utc::now(),
+                event_type: "login".into(),
+                description: "Logged into A.L.F.R.E.D. platform".into(),
+                linked_entity_id: None,
+                metadata: serde_json::json!({"ip": "192.168.1.50"}),
             },
             TimelineEvent {
-                id: Uuid::new_v4(), person_id,
+                id: Uuid::new_v4(),
+                person_id,
                 timestamp: Utc::now() - chrono::Duration::minutes(30),
-                event_type: "checkin".into(), description: "Morning check-in submitted. Priority: Deploy billing fix.".into(),
-                linked_entity_id: None, metadata: serde_json::json!({"mood": "good"}),
+                event_type: "checkin".into(),
+                description: "Morning check-in submitted. Priority: Deploy billing fix.".into(),
+                linked_entity_id: None,
+                metadata: serde_json::json!({"mood": "good"}),
             },
             TimelineEvent {
-                id: Uuid::new_v4(), person_id,
+                id: Uuid::new_v4(),
+                person_id,
                 timestamp: Utc::now() - chrono::Duration::hours(1),
-                event_type: "deployment".into(), description: "Deployed billing-api v3.2.1 to production".into(),
-                linked_entity_id: Some("deploy-4521".into()), metadata: serde_json::json!({"status": "success"}),
+                event_type: "deployment".into(),
+                description: "Deployed billing-api v3.2.1 to production".into(),
+                linked_entity_id: Some("deploy-4521".into()),
+                metadata: serde_json::json!({"status": "success"}),
             },
             TimelineEvent {
-                id: Uuid::new_v4(), person_id,
+                id: Uuid::new_v4(),
+                person_id,
                 timestamp: Utc::now() - chrono::Duration::hours(2),
-                event_type: "incident".into(), description: "Joined war room for INC-1042 (CoreDNS CrashLoop)".into(),
-                linked_entity_id: Some("INC-1042".into()), metadata: serde_json::json!({"role": "responder"}),
+                event_type: "incident".into(),
+                description: "Joined war room for INC-1042 (CoreDNS CrashLoop)".into(),
+                linked_entity_id: Some("INC-1042".into()),
+                metadata: serde_json::json!({"role": "responder"}),
             },
         ]
     }
@@ -139,22 +162,35 @@ impl PeopleEngine {
 
         if let Some(pg) = &self.storage.pg_pool {
             use sqlx::Row;
-            if let Ok(row) = sqlx::query("SELECT COUNT(*) as c FROM persons").fetch_one(pg).await {
+            if let Ok(row) = sqlx::query("SELECT COUNT(*) as c FROM persons")
+                .fetch_one(pg)
+                .await
+            {
                 total_persons = row.get::<i64, _>("c") as u32;
             }
-            if let Ok(row) = sqlx::query("SELECT COUNT(*) as c FROM teams").fetch_one(pg).await {
+            if let Ok(row) = sqlx::query("SELECT COUNT(*) as c FROM teams")
+                .fetch_one(pg)
+                .await
+            {
                 total_teams = row.get::<i64, _>("c") as u32;
             }
             let today = Utc::now().date_naive();
             if let Ok(row) = sqlx::query("SELECT COUNT(*) as c FROM daily_checkins WHERE date = $1")
-                .bind(today).fetch_one(pg).await {
+                .bind(today)
+                .fetch_one(pg)
+                .await
+            {
                 checkins_today = row.get::<i64, _>("c") as u32;
             }
         }
 
         // Use sensible defaults when DB has no data yet
-        if total_persons == 0 { total_persons = 24; }
-        if total_teams == 0 { total_teams = 5; }
+        if total_persons == 0 {
+            total_persons = 24;
+        }
+        if total_teams == 0 {
+            total_teams = 5;
+        }
 
         PeopleInsights {
             total_persons,
@@ -230,10 +266,18 @@ impl PeopleEngine {
             entities.push("customer_context".into());
             suggested_actions.push("Flag for customer success team review".into());
         }
-        if lower.contains("jenkins") { entities.push("Jenkins".into()); }
-        if lower.contains("aws") || lower.contains("ec2") || lower.contains("s3") { entities.push("AWS".into()); }
-        if lower.contains("kubernetes") || lower.contains("k8s") || lower.contains("pod") { entities.push("Kubernetes".into()); }
-        if lower.contains("postgres") || lower.contains("database") || lower.contains("db") { entities.push("Database".into()); }
+        if lower.contains("jenkins") {
+            entities.push("Jenkins".into());
+        }
+        if lower.contains("aws") || lower.contains("ec2") || lower.contains("s3") {
+            entities.push("AWS".into());
+        }
+        if lower.contains("kubernetes") || lower.contains("k8s") || lower.contains("pod") {
+            entities.push("Kubernetes".into());
+        }
+        if lower.contains("postgres") || lower.contains("database") || lower.contains("db") {
+            entities.push("Database".into());
+        }
 
         if intents.is_empty() {
             intents.push("general_update".into());
@@ -251,19 +295,26 @@ impl PeopleEngine {
     pub async fn get_all_persons(&self) -> Vec<serde_json::Value> {
         if let Some(pg) = &self.storage.pg_pool {
             let rows = sqlx::query(
-                "SELECT id, name, email, role, department, status FROM persons ORDER BY name"
-            ).fetch_all(pg).await;
+                "SELECT id, name, email, role, department, status FROM persons ORDER BY name",
+            )
+            .fetch_all(pg)
+            .await;
 
             if let Ok(records) = rows {
                 use sqlx::Row;
-                let result: Vec<serde_json::Value> = records.iter().map(|r| serde_json::json!({
-                    "id": r.get::<Uuid, _>("id").to_string(),
-                    "name": r.get::<String, _>("name"),
-                    "email": r.get::<String, _>("email"),
-                    "role": r.get::<String, _>("role"),
-                    "department": r.get::<String, _>("department"),
-                    "status": r.get::<String, _>("status"),
-                })).collect();
+                let result: Vec<serde_json::Value> = records
+                    .iter()
+                    .map(|r| {
+                        serde_json::json!({
+                            "id": r.get::<Uuid, _>("id").to_string(),
+                            "name": r.get::<String, _>("name"),
+                            "email": r.get::<String, _>("email"),
+                            "role": r.get::<String, _>("role"),
+                            "department": r.get::<String, _>("department"),
+                            "status": r.get::<String, _>("status"),
+                        })
+                    })
+                    .collect();
                 if !result.is_empty() {
                     return result;
                 }
@@ -284,17 +335,22 @@ impl PeopleEngine {
     /// Get all teams (from DB or mock)
     pub async fn get_all_teams(&self) -> Vec<serde_json::Value> {
         if let Some(pg) = &self.storage.pg_pool {
-            let rows = sqlx::query(
-                "SELECT id, name, department FROM teams ORDER BY name"
-            ).fetch_all(pg).await;
+            let rows = sqlx::query("SELECT id, name, department FROM teams ORDER BY name")
+                .fetch_all(pg)
+                .await;
 
             if let Ok(records) = rows {
                 use sqlx::Row;
-                let result: Vec<serde_json::Value> = records.iter().map(|r| serde_json::json!({
-                    "id": r.get::<Uuid, _>("id").to_string(),
-                    "name": r.get::<String, _>("name"),
-                    "department": r.get::<String, _>("department"),
-                })).collect();
+                let result: Vec<serde_json::Value> = records
+                    .iter()
+                    .map(|r| {
+                        serde_json::json!({
+                            "id": r.get::<Uuid, _>("id").to_string(),
+                            "name": r.get::<String, _>("name"),
+                            "department": r.get::<String, _>("department"),
+                        })
+                    })
+                    .collect();
                 if !result.is_empty() {
                     return result;
                 }

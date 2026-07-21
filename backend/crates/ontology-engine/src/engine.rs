@@ -1,7 +1,7 @@
+use crate::entities::{EntityType, GraphEntity, GraphRelation};
+use neo4rs::query;
 use serde_json::Value;
 use storage_engine::StorageEngine;
-use crate::entities::{GraphEntity, GraphRelation, EntityType};
-use neo4rs::query;
 
 pub struct OntologyEngine {
     pub storage: StorageEngine,
@@ -16,18 +16,23 @@ impl OntologyEngine {
     pub async fn ingest_entity(&self, entity: &GraphEntity) -> Result<(), String> {
         tracing::info!(
             "Ontology: Ingesting entity [{:?}] id={} name={}",
-            entity.entity_type, entity.id, entity.name
+            entity.entity_type,
+            entity.id,
+            entity.name
         );
 
         if let Some(graph) = &self.storage.graph_db {
             let q = query(
                 "MERGE (n:Entity {id: $id}) \
-                 SET n.name = $name, n.entity_type = $entity_type, n.properties = $properties"
+                 SET n.name = $name, n.entity_type = $entity_type, n.properties = $properties",
             )
             .param("id", entity.id.clone())
             .param("name", entity.name.clone())
             .param("entity_type", format!("{:?}", entity.entity_type))
-            .param("properties", serde_json::to_string(&entity.properties).unwrap_or_default());
+            .param(
+                "properties",
+                serde_json::to_string(&entity.properties).unwrap_or_default(),
+            );
 
             if let Err(e) = graph.run(q).await {
                 tracing::error!("Neo4j error on ingest_entity: {}", e);
@@ -41,14 +46,16 @@ impl OntologyEngine {
     pub async fn create_relation(&self, rel: &GraphRelation) -> Result<(), String> {
         tracing::info!(
             "Ontology: Relation {:?} -> [{:?}] -> {}",
-            rel.from_id, rel.relation_type, rel.to_id
+            rel.from_id,
+            rel.relation_type,
+            rel.to_id
         );
 
         if let Some(graph) = &self.storage.graph_db {
             let q = query(
                 "MATCH (a:Entity {id: $from_id}), (b:Entity {id: $to_id}) \
                  MERGE (a)-[r:RELATED {type: $relation_type}]->(b) \
-                 SET r.weight = $weight"
+                 SET r.weight = $weight",
             )
             .param("from_id", rel.from_id.clone())
             .param("to_id", rel.to_id.clone())
@@ -92,7 +99,10 @@ impl OntologyEngine {
                     }
                 }
                 Err(e) => {
-                    tracing::error!("Neo4j traversal error: {}, falling back to mock impact data", e);
+                    tracing::error!(
+                        "Neo4j traversal error: {}, falling back to mock impact data",
+                        e
+                    );
                 }
             }
         }
@@ -102,7 +112,7 @@ impl OntologyEngine {
                 serde_json::json!({ "id": "svc-billing", "name": "Billing API", "type": "application", "depth": 1 }),
                 serde_json::json!({ "id": "svc-auth", "name": "Auth Service", "type": "application", "depth": 1 }),
                 serde_json::json!({ "id": "cust-enterprise-1", "name": "Acme Corp", "type": "customer", "depth": 2 }),
-                serde_json::json!({ "id": "sla-gold-tier", "name": "Gold SLA", "type": "sla", "depth": 2 })
+                serde_json::json!({ "id": "sla-gold-tier", "name": "Gold SLA", "type": "sla", "depth": 2 }),
             ];
         }
 
@@ -115,8 +125,14 @@ impl OntologyEngine {
     }
 
     /// Ingest incident telemetry and extract entities via LLM (stub — calls ai-gateway in real impl)
-    pub async fn ingest_incident_telemetry(&self, incident_description: &str) -> Result<Vec<GraphEntity>, String> {
-        tracing::info!("Ontology: Extracting entities from incident: {}", incident_description);
+    pub async fn ingest_incident_telemetry(
+        &self,
+        incident_description: &str,
+    ) -> Result<Vec<GraphEntity>, String> {
+        tracing::info!(
+            "Ontology: Extracting entities from incident: {}",
+            incident_description
+        );
 
         let mock_entities = vec![
             GraphEntity::new("api-gw-prod", EntityType::Application, "API Gateway (prod)"),
@@ -139,7 +155,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_mock_impact_radius() {
-        let storage = StorageEngine { pg_pool: None, graph_db: None };
+        let storage = StorageEngine {
+            pg_pool: None,
+            graph_db: None,
+        };
         let engine = OntologyEngine::new(storage);
 
         let res = engine.get_impact_radius("api-gw-prod").await;
@@ -151,13 +170,17 @@ mod tests {
 
     #[tokio::test]
     async fn test_ingest_telemetry() {
-        let storage = StorageEngine { pg_pool: None, graph_db: None };
+        let storage = StorageEngine {
+            pg_pool: None,
+            graph_db: None,
+        };
         let engine = OntologyEngine::new(storage);
 
-        let res = engine.ingest_incident_telemetry("High database load on Postgres Orders").await;
+        let res = engine
+            .ingest_incident_telemetry("High database load on Postgres Orders")
+            .await;
         assert!(res.is_ok());
         let entities = res.unwrap();
         assert_eq!(entities.len(), 4);
     }
 }
-

@@ -256,9 +256,13 @@ impl RegistryService {
 
     pub async fn list_by_kind(&self, kind: &ManifestKind) -> Vec<PackageManifest> {
         self.sync_states_from_db().await;
-        self.packages.read().unwrap().values()
+        self.packages
+            .read()
+            .unwrap()
+            .values()
             .filter(|p| &p.kind == kind)
-            .cloned().collect()
+            .cloned()
+            .collect()
     }
 
     pub async fn install(&self, id: &str) -> Result<(), String> {

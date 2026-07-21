@@ -1,25 +1,27 @@
-use axum::{
-    Json, extract::State,
-};
-use serde_json::{json, Value};
 use crate::AppState;
+use axum::{extract::State, Json};
+use serde_json::{json, Value};
 
-pub async fn get_analytics(
-    State(state): State<AppState>,
-) -> Json<Value> {
+pub async fn get_analytics(State(state): State<AppState>) -> Json<Value> {
     use sqlx::Row;
     let mut total_incidents = 0;
     let mut total_sops = 0;
     let mut total_feedback = 0;
 
     if let Some(pg) = &state.storage.pg_pool {
-        if let Ok(row) = sqlx::query("SELECT COUNT(*) FROM incidents").fetch_one(pg).await {
+        if let Ok(row) = sqlx::query("SELECT COUNT(*) FROM incidents")
+            .fetch_one(pg)
+            .await
+        {
             total_incidents = row.get::<i64, _>(0);
         }
         if let Ok(row) = sqlx::query("SELECT COUNT(*) FROM sops").fetch_one(pg).await {
             total_sops = row.get::<i64, _>(0);
         }
-        if let Ok(row) = sqlx::query("SELECT COUNT(*) FROM human_feedback").fetch_one(pg).await {
+        if let Ok(row) = sqlx::query("SELECT COUNT(*) FROM human_feedback")
+            .fetch_one(pg)
+            .await
+        {
             total_feedback = row.get::<i64, _>(0);
         }
     }
@@ -69,107 +71,350 @@ struct TplRecord {
 
 pub async fn get_opex_roi() -> Json<Value> {
     let templates: &[TplRecord] = &[
-        TplRecord { id: "TPL-001", category: "IT Operations",  severity: "Critical", estimated_resolution_mins: 8,  monthly_occurrences: 3,   confidence_pct: 0.98 },
-        TplRecord { id: "TPL-002", category: "IT Operations",  severity: "High",     estimated_resolution_mins: 12, monthly_occurrences: 8,   confidence_pct: 0.92 },
-        TplRecord { id: "TPL-003", category: "IT Operations",  severity: "High",     estimated_resolution_mins: 6,  monthly_occurrences: 5,   confidence_pct: 0.96 },
-        TplRecord { id: "TPL-010", category: "Database",        severity: "Critical", estimated_resolution_mins: 5,  monthly_occurrences: 4,   confidence_pct: 0.97 },
-        TplRecord { id: "TPL-011", category: "Database",        severity: "Medium",   estimated_resolution_mins: 20, monthly_occurrences: 12,  confidence_pct: 0.89 },
-        TplRecord { id: "TPL-012", category: "Database",        severity: "Low",      estimated_resolution_mins: 15, monthly_occurrences: 30,  confidence_pct: 0.99 },
-        TplRecord { id: "TPL-020", category: "Cloud",           severity: "High",     estimated_resolution_mins: 10, monthly_occurrences: 6,   confidence_pct: 0.95 },
-        TplRecord { id: "TPL-021", category: "Cloud",           severity: "High",     estimated_resolution_mins: 4,  monthly_occurrences: 15,  confidence_pct: 0.93 },
-        TplRecord { id: "TPL-022", category: "Cloud",           severity: "Low",      estimated_resolution_mins: 30, monthly_occurrences: 4,   confidence_pct: 0.91 },
-        TplRecord { id: "TPL-030", category: "Security",        severity: "Critical", estimated_resolution_mins: 3,  monthly_occurrences: 20,  confidence_pct: 0.96 },
-        TplRecord { id: "TPL-031", category: "Security",        severity: "Critical", estimated_resolution_mins: 8,  monthly_occurrences: 5,   confidence_pct: 0.99 },
-        TplRecord { id: "TPL-032", category: "Security",        severity: "Critical", estimated_resolution_mins: 5,  monthly_occurrences: 2,   confidence_pct: 0.94 },
-        TplRecord { id: "TPL-040", category: "Identity",        severity: "High",     estimated_resolution_mins: 15, monthly_occurrences: 25,  confidence_pct: 0.98 },
-        TplRecord { id: "TPL-041", category: "Identity",        severity: "Low",      estimated_resolution_mins: 2,  monthly_occurrences: 200, confidence_pct: 0.99 },
-        TplRecord { id: "TPL-050", category: "Network",         severity: "High",     estimated_resolution_mins: 15, monthly_occurrences: 3,   confidence_pct: 0.90 },
-        TplRecord { id: "TPL-051", category: "Network",         severity: "Critical", estimated_resolution_mins: 5,  monthly_occurrences: 2,   confidence_pct: 0.97 },
-        TplRecord { id: "TPL-060", category: "ITSM",            severity: "High",     estimated_resolution_mins: 3,  monthly_occurrences: 10,  confidence_pct: 0.95 },
-        TplRecord { id: "TPL-061", category: "ITSM",            severity: "Medium",   estimated_resolution_mins: 10, monthly_occurrences: 40,  confidence_pct: 0.91 },
-        TplRecord { id: "TPL-070", category: "Healthcare IT",   severity: "Critical", estimated_resolution_mins: 8,  monthly_occurrences: 2,   confidence_pct: 0.93 },
-        TplRecord { id: "TPL-080", category: "Finance IT",      severity: "Critical", estimated_resolution_mins: 6,  monthly_occurrences: 3,   confidence_pct: 0.97 },
-        TplRecord { id: "TPL-090", category: "Compliance",      severity: "Low",      estimated_resolution_mins: 60, monthly_occurrences: 1,   confidence_pct: 0.99 },
-        
+        TplRecord {
+            id: "TPL-001",
+            category: "IT Operations",
+            severity: "Critical",
+            estimated_resolution_mins: 8,
+            monthly_occurrences: 3,
+            confidence_pct: 0.98,
+        },
+        TplRecord {
+            id: "TPL-002",
+            category: "IT Operations",
+            severity: "High",
+            estimated_resolution_mins: 12,
+            monthly_occurrences: 8,
+            confidence_pct: 0.92,
+        },
+        TplRecord {
+            id: "TPL-003",
+            category: "IT Operations",
+            severity: "High",
+            estimated_resolution_mins: 6,
+            monthly_occurrences: 5,
+            confidence_pct: 0.96,
+        },
+        TplRecord {
+            id: "TPL-010",
+            category: "Database",
+            severity: "Critical",
+            estimated_resolution_mins: 5,
+            monthly_occurrences: 4,
+            confidence_pct: 0.97,
+        },
+        TplRecord {
+            id: "TPL-011",
+            category: "Database",
+            severity: "Medium",
+            estimated_resolution_mins: 20,
+            monthly_occurrences: 12,
+            confidence_pct: 0.89,
+        },
+        TplRecord {
+            id: "TPL-012",
+            category: "Database",
+            severity: "Low",
+            estimated_resolution_mins: 15,
+            monthly_occurrences: 30,
+            confidence_pct: 0.99,
+        },
+        TplRecord {
+            id: "TPL-020",
+            category: "Cloud",
+            severity: "High",
+            estimated_resolution_mins: 10,
+            monthly_occurrences: 6,
+            confidence_pct: 0.95,
+        },
+        TplRecord {
+            id: "TPL-021",
+            category: "Cloud",
+            severity: "High",
+            estimated_resolution_mins: 4,
+            monthly_occurrences: 15,
+            confidence_pct: 0.93,
+        },
+        TplRecord {
+            id: "TPL-022",
+            category: "Cloud",
+            severity: "Low",
+            estimated_resolution_mins: 30,
+            monthly_occurrences: 4,
+            confidence_pct: 0.91,
+        },
+        TplRecord {
+            id: "TPL-030",
+            category: "Security",
+            severity: "Critical",
+            estimated_resolution_mins: 3,
+            monthly_occurrences: 20,
+            confidence_pct: 0.96,
+        },
+        TplRecord {
+            id: "TPL-031",
+            category: "Security",
+            severity: "Critical",
+            estimated_resolution_mins: 8,
+            monthly_occurrences: 5,
+            confidence_pct: 0.99,
+        },
+        TplRecord {
+            id: "TPL-032",
+            category: "Security",
+            severity: "Critical",
+            estimated_resolution_mins: 5,
+            monthly_occurrences: 2,
+            confidence_pct: 0.94,
+        },
+        TplRecord {
+            id: "TPL-040",
+            category: "Identity",
+            severity: "High",
+            estimated_resolution_mins: 15,
+            monthly_occurrences: 25,
+            confidence_pct: 0.98,
+        },
+        TplRecord {
+            id: "TPL-041",
+            category: "Identity",
+            severity: "Low",
+            estimated_resolution_mins: 2,
+            monthly_occurrences: 200,
+            confidence_pct: 0.99,
+        },
+        TplRecord {
+            id: "TPL-050",
+            category: "Network",
+            severity: "High",
+            estimated_resolution_mins: 15,
+            monthly_occurrences: 3,
+            confidence_pct: 0.90,
+        },
+        TplRecord {
+            id: "TPL-051",
+            category: "Network",
+            severity: "Critical",
+            estimated_resolution_mins: 5,
+            monthly_occurrences: 2,
+            confidence_pct: 0.97,
+        },
+        TplRecord {
+            id: "TPL-060",
+            category: "ITSM",
+            severity: "High",
+            estimated_resolution_mins: 3,
+            monthly_occurrences: 10,
+            confidence_pct: 0.95,
+        },
+        TplRecord {
+            id: "TPL-061",
+            category: "ITSM",
+            severity: "Medium",
+            estimated_resolution_mins: 10,
+            monthly_occurrences: 40,
+            confidence_pct: 0.91,
+        },
+        TplRecord {
+            id: "TPL-070",
+            category: "Healthcare IT",
+            severity: "Critical",
+            estimated_resolution_mins: 8,
+            monthly_occurrences: 2,
+            confidence_pct: 0.93,
+        },
+        TplRecord {
+            id: "TPL-080",
+            category: "Finance IT",
+            severity: "Critical",
+            estimated_resolution_mins: 6,
+            monthly_occurrences: 3,
+            confidence_pct: 0.97,
+        },
+        TplRecord {
+            id: "TPL-090",
+            category: "Compliance",
+            severity: "Low",
+            estimated_resolution_mins: 60,
+            monthly_occurrences: 1,
+            confidence_pct: 0.99,
+        },
         // People Engineering (PE) Templates
-        TplRecord { id: "TPL-PE-001", category: "People Engineering", severity: "High", estimated_resolution_mins: 10, monthly_occurrences: 5, confidence_pct: 0.94 },
-        TplRecord { id: "TPL-PE-002", category: "People Engineering", severity: "Medium", estimated_resolution_mins: 20, monthly_occurrences: 15, confidence_pct: 0.88 },
-        TplRecord { id: "TPL-PE-003", category: "People Engineering", severity: "High", estimated_resolution_mins: 15, monthly_occurrences: 4, confidence_pct: 0.91 },
-        TplRecord { id: "TPL-PE-004", category: "People Engineering", severity: "Critical", estimated_resolution_mins: 5, monthly_occurrences: 2, confidence_pct: 0.96 },
-        TplRecord { id: "TPL-PE-005", category: "People Engineering", severity: "Medium", estimated_resolution_mins: 30, monthly_occurrences: 8, confidence_pct: 0.85 },
-        TplRecord { id: "TPL-PE-006", category: "People Engineering", severity: "Low", estimated_resolution_mins: 45, monthly_occurrences: 2, confidence_pct: 0.90 },
-        TplRecord { id: "TPL-PE-007", category: "People Engineering", severity: "High", estimated_resolution_mins: 12, monthly_occurrences: 10, confidence_pct: 0.95 },
-        TplRecord { id: "TPL-PE-008", category: "People Engineering", severity: "Critical", estimated_resolution_mins: 8, monthly_occurrences: 3, confidence_pct: 0.98 },
+        TplRecord {
+            id: "TPL-PE-001",
+            category: "People Engineering",
+            severity: "High",
+            estimated_resolution_mins: 10,
+            monthly_occurrences: 5,
+            confidence_pct: 0.94,
+        },
+        TplRecord {
+            id: "TPL-PE-002",
+            category: "People Engineering",
+            severity: "Medium",
+            estimated_resolution_mins: 20,
+            monthly_occurrences: 15,
+            confidence_pct: 0.88,
+        },
+        TplRecord {
+            id: "TPL-PE-003",
+            category: "People Engineering",
+            severity: "High",
+            estimated_resolution_mins: 15,
+            monthly_occurrences: 4,
+            confidence_pct: 0.91,
+        },
+        TplRecord {
+            id: "TPL-PE-004",
+            category: "People Engineering",
+            severity: "Critical",
+            estimated_resolution_mins: 5,
+            monthly_occurrences: 2,
+            confidence_pct: 0.96,
+        },
+        TplRecord {
+            id: "TPL-PE-005",
+            category: "People Engineering",
+            severity: "Medium",
+            estimated_resolution_mins: 30,
+            monthly_occurrences: 8,
+            confidence_pct: 0.85,
+        },
+        TplRecord {
+            id: "TPL-PE-006",
+            category: "People Engineering",
+            severity: "Low",
+            estimated_resolution_mins: 45,
+            monthly_occurrences: 2,
+            confidence_pct: 0.90,
+        },
+        TplRecord {
+            id: "TPL-PE-007",
+            category: "People Engineering",
+            severity: "High",
+            estimated_resolution_mins: 12,
+            monthly_occurrences: 10,
+            confidence_pct: 0.95,
+        },
+        TplRecord {
+            id: "TPL-PE-008",
+            category: "People Engineering",
+            severity: "Critical",
+            estimated_resolution_mins: 8,
+            monthly_occurrences: 3,
+            confidence_pct: 0.98,
+        },
     ];
 
     let sre_cost_per_hr_usd: f64 = 150.0;
 
     let template_count = templates.len() as u64;
     let total_monthly_occurrences: u32 = templates.iter().map(|t| t.monthly_occurrences).sum();
-    let total_minutes_saved_per_occurrence: f64 = templates.iter()
+    let total_minutes_saved_per_occurrence: f64 = templates
+        .iter()
         .map(|t| t.estimated_resolution_mins as f64)
-        .sum::<f64>() / template_count as f64;
+        .sum::<f64>()
+        / template_count as f64;
 
-    let monthly_hours_saved: f64 = templates.iter()
+    let monthly_hours_saved: f64 = templates
+        .iter()
         .map(|t| (t.monthly_occurrences as f64 * t.estimated_resolution_mins as f64) / 60.0)
         .sum();
 
     let monthly_sre_savings_usd: f64 = monthly_hours_saved * sre_cost_per_hr_usd;
     let annual_sre_savings_usd: f64 = monthly_sre_savings_usd * 12.0;
 
-    let weighted_confidence: f64 = templates.iter()
+    let weighted_confidence: f64 = templates
+        .iter()
         .map(|t| t.confidence_pct * t.monthly_occurrences as f64)
-        .sum::<f64>() / total_monthly_occurrences as f64;
+        .sum::<f64>()
+        / total_monthly_occurrences as f64;
 
-    let categories = vec!["IT Operations", "Database", "Cloud", "Security", "Identity", "Network", "ITSM", "Healthcare IT", "Finance IT", "Compliance", "People Engineering"];
-    let by_category: Vec<Value> = categories.iter().map(|cat| {
-        let cat_templates: Vec<&TplRecord> = templates.iter().filter(|t| t.category == *cat).collect();
-        if cat_templates.is_empty() { return json!(null); }
-        let count = cat_templates.len() as u32;
-        let total_occ: u32 = cat_templates.iter().map(|t| t.monthly_occurrences).sum();
-        let hours: f64 = cat_templates.iter()
-            .map(|t| (t.monthly_occurrences as f64 * t.estimated_resolution_mins as f64) / 60.0)
-            .sum();
-        let savings_usd: f64 = hours * sre_cost_per_hr_usd;
-        let avg_resolution_mins: f64 = cat_templates.iter()
-            .map(|t| t.estimated_resolution_mins as f64).sum::<f64>() / count as f64;
-        let avg_confidence: f64 = cat_templates.iter()
-            .map(|t| t.confidence_pct * t.monthly_occurrences as f64)
-            .sum::<f64>() / total_occ as f64;
+    let categories = vec![
+        "IT Operations",
+        "Database",
+        "Cloud",
+        "Security",
+        "Identity",
+        "Network",
+        "ITSM",
+        "Healthcare IT",
+        "Finance IT",
+        "Compliance",
+        "People Engineering",
+    ];
+    let by_category: Vec<Value> = categories
+        .iter()
+        .map(|cat| {
+            let cat_templates: Vec<&TplRecord> =
+                templates.iter().filter(|t| t.category == *cat).collect();
+            if cat_templates.is_empty() {
+                return json!(null);
+            }
+            let count = cat_templates.len() as u32;
+            let total_occ: u32 = cat_templates.iter().map(|t| t.monthly_occurrences).sum();
+            let hours: f64 = cat_templates
+                .iter()
+                .map(|t| (t.monthly_occurrences as f64 * t.estimated_resolution_mins as f64) / 60.0)
+                .sum();
+            let savings_usd: f64 = hours * sre_cost_per_hr_usd;
+            let avg_resolution_mins: f64 = cat_templates
+                .iter()
+                .map(|t| t.estimated_resolution_mins as f64)
+                .sum::<f64>()
+                / count as f64;
+            let avg_confidence: f64 = cat_templates
+                .iter()
+                .map(|t| t.confidence_pct * t.monthly_occurrences as f64)
+                .sum::<f64>()
+                / total_occ as f64;
 
-        json!({
-            "category": cat,
-            "template_count": count,
-            "monthly_occurrences": total_occ,
-            "monthly_hours_saved": (hours * 10.0).round() / 10.0,
-            "monthly_sre_savings_usd": (savings_usd * 100.0).round() / 100.0,
-            "avg_resolution_mins": (avg_resolution_mins * 10.0).round() / 10.0,
-            "avg_ai_confidence_pct": (avg_confidence * 1000.0).round() / 10.0,
+            json!({
+                "category": cat,
+                "template_count": count,
+                "monthly_occurrences": total_occ,
+                "monthly_hours_saved": (hours * 10.0).round() / 10.0,
+                "monthly_sre_savings_usd": (savings_usd * 100.0).round() / 100.0,
+                "avg_resolution_mins": (avg_resolution_mins * 10.0).round() / 10.0,
+                "avg_ai_confidence_pct": (avg_confidence * 1000.0).round() / 10.0,
+            })
         })
-    })
-    .filter(|v| !v.is_null())
-    .collect();
+        .filter(|v| !v.is_null())
+        .collect();
 
-    let count_critical = templates.iter().filter(|t| t.severity == "Critical").count();
-    let count_high     = templates.iter().filter(|t| t.severity == "High").count();
-    let count_medium   = templates.iter().filter(|t| t.severity == "Medium").count();
-    let count_low      = templates.iter().filter(|t| t.severity == "Low").count();
+    let count_critical = templates
+        .iter()
+        .filter(|t| t.severity == "Critical")
+        .count();
+    let count_high = templates.iter().filter(|t| t.severity == "High").count();
+    let count_medium = templates.iter().filter(|t| t.severity == "Medium").count();
+    let count_low = templates.iter().filter(|t| t.severity == "Low").count();
 
-    let mut by_impact: Vec<(&TplRecord, f64)> = templates.iter()
-        .map(|t| (t, (t.monthly_occurrences as f64 * t.estimated_resolution_mins as f64) / 60.0))
+    let mut by_impact: Vec<(&TplRecord, f64)> = templates
+        .iter()
+        .map(|t| {
+            (
+                t,
+                (t.monthly_occurrences as f64 * t.estimated_resolution_mins as f64) / 60.0,
+            )
+        })
         .collect();
     by_impact.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
 
-    let top_5: Vec<Value> = by_impact.iter().take(5).map(|(t, hrs)| {
-        json!({
-            "id": t.id,
-            "category": t.category,
-            "monthly_hours_saved": (hrs * 10.0).round() / 10.0,
-            "monthly_sre_savings_usd": (hrs * sre_cost_per_hr_usd * 100.0).round() / 100.0,
-            "monthly_occurrences": t.monthly_occurrences,
-            "estimated_resolution_mins": t.estimated_resolution_mins,
+    let top_5: Vec<Value> = by_impact
+        .iter()
+        .take(5)
+        .map(|(t, hrs)| {
+            json!({
+                "id": t.id,
+                "category": t.category,
+                "monthly_hours_saved": (hrs * 10.0).round() / 10.0,
+                "monthly_sre_savings_usd": (hrs * sre_cost_per_hr_usd * 100.0).round() / 100.0,
+                "monthly_occurrences": t.monthly_occurrences,
+                "estimated_resolution_mins": t.estimated_resolution_mins,
+            })
         })
-    }).collect();
+        .collect();
 
     Json(json!({
         "data_source": "Template catalog — GET /api/templates",
