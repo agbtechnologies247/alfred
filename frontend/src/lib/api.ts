@@ -278,6 +278,94 @@ const DEFAULT_MARKETPLACE = [
   }
 ];
 
+const DEFAULT_PEOPLE = [
+  { id: '11111111-1111-1111-1111-111111111111', name: 'Rahul Sharma', role: 'Senior SRE Lead', department: 'Engineering', current_status: 'Active', stress_level: 'High', team: 'SRE Core', email: 'rahul.sharma@agbtechnologies.com' },
+  { id: '22222222-2222-2222-2222-222222222222', name: 'Priya Patel', role: 'DevOps Engineer', department: 'Engineering', current_status: 'Active', stress_level: 'Low', team: 'Platform Cloud', email: 'priya.patel@agbtechnologies.com' },
+  { id: '33333333-3333-3333-3333-333333333333', name: 'Amit Kumar', role: 'Infrastructure SRE', department: 'Engineering', current_status: 'Active', stress_level: 'Medium', team: 'SRE Core', email: 'amit.kumar@agbtechnologies.com' },
+  { id: '44444444-4444-4444-4444-444444444444', name: 'Neha Gupta', role: 'Database Administrator', department: 'Database Ops', current_status: 'Active', stress_level: 'Low', team: 'Platform Cloud', email: 'neha.gupta@agbtechnologies.com' }
+];
+
+const DEFAULT_PEOPLE_INSIGHTS = {
+  checkins_today: 4,
+  sentiment_trend: 'Improving',
+  team_burnout_risk: 'Medium',
+  high_stress_employees: 1,
+  active_blockers: 2,
+  avg_collaboration_score: 87
+};
+
+const DEFAULT_PEOPLE_TIMELINE = {
+  '11111111-1111-1111-1111-111111111111': [
+    { timestamp: new Date(Date.now() - 10 * 60 * 1000).toISOString(), event_type: 'incident', description: 'Investigated CoreDNS CrashLoop BackOff', linked_entity_id: 'INC-1042' },
+    { timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), event_type: 'standup', description: 'Submitted Morning Check-in: Stressed about DB lockups', linked_entity_id: '' },
+    { timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), event_type: 'deployment', description: 'Deployed patch for API Gateway', linked_entity_id: 'release-1.4.2' }
+  ],
+  '22222222-2222-2222-2222-222222222222': [
+    { timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(), event_type: 'deployment', description: 'Completed rollback of staging config', linked_entity_id: 'deploy-883' },
+    { timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), event_type: 'standup', description: 'Submitted Morning Check-in: Doing great', linked_entity_id: '' }
+  ],
+  '33333333-3333-3333-3333-333333333333': [
+    { timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), event_type: 'incident', description: 'Debugging max connections alert on production database', linked_entity_id: 'INC-1043' },
+    { timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), event_type: 'standup', description: 'Submitted Morning Check-in: Resolving postgres tasks', linked_entity_id: '' }
+  ],
+  '44444444-4444-4444-4444-444444444444': [
+    { timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), event_type: 'incident', description: 'Renewed SSL TLS credentials safely', linked_entity_id: 'INC-1044' },
+    { timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), event_type: 'standup', description: 'Submitted Morning Check-in: System is stable', linked_entity_id: '' }
+  ]
+};
+
+const DEFAULT_PEOPLE_RECOMMENDATIONS = {
+  '11111111-1111-1111-1111-111111111111': {
+    focus_score: 65,
+    collaboration_score: 92,
+    workload_score: 88,
+    knowledge_sharing_score: 95,
+    risk_pattern: 'overloaded',
+    working_style: 'Collaborative Specialist',
+    recommendations: [
+      'Encourage delegation of P1 incident responses to other senior staff.',
+      'Suggest blocking focus time for core optimization tasks instead of constant slack replies.',
+      'Recommend taking a recovery day after high on-call load this week.'
+    ]
+  },
+  '22222222-2222-2222-2222-222222222222': {
+    focus_score: 85,
+    collaboration_score: 75,
+    workload_score: 45,
+    knowledge_sharing_score: 70,
+    risk_pattern: 'healthy',
+    working_style: 'Independent Executor',
+    recommendations: [
+      'Great work keeping a balanced workload score this week.',
+      'Encourage pairing up with SRE Core team members to share knowledge on platform configurations.'
+    ]
+  },
+  '33333333-3333-3333-3333-333333333333': {
+    focus_score: 72,
+    collaboration_score: 80,
+    workload_score: 75,
+    knowledge_sharing_score: 82,
+    risk_pattern: 'healthy',
+    working_style: 'Reliable Supporter',
+    recommendations: [
+      'Workload is high but currently manageable.',
+      'Recommend document sharing and automated checks for postgres slots to prevent midnight calls.'
+    ]
+  },
+  '44444444-4444-4444-4444-444444444444': {
+    focus_score: 90,
+    collaboration_score: 68,
+    workload_score: 35,
+    knowledge_sharing_score: 75,
+    risk_pattern: 'healthy',
+    working_style: 'Steady Contributor',
+    recommendations: [
+      'Very strong focus score. Keep it up!',
+      'Review automations or setup cron templates to optimize SSL handshakes.'
+    ]
+  }
+};
+
 export async function fetcher<T = any>(endpoint: string, options?: RequestInit, fallback?: T): Promise<T> {
   const token = localStorage.getItem('alfred_token') || 'sk_test_xxxxx';
   const headers = {
@@ -689,8 +777,103 @@ export const api = {
     }
   },
   people: {
-    getAll: () => fetcher<any[]>('/people'),
-    getInsights: () => fetcher<any>('/people/insights'),
-    checkin: (payload: any) => post('/people/checkin', payload),
+    getAll: async () => {
+      const fallback = getStored<any[]>('alfred_people', DEFAULT_PEOPLE);
+      return fetcher<any[]>('/people', undefined, fallback);
+    },
+    getInsights: async () => {
+      const fallback = getStored<any>('alfred_people_insights', DEFAULT_PEOPLE_INSIGHTS);
+      return fetcher<any>('/people/insights', undefined, fallback);
+    },
+    checkin: async (payload: any) => {
+      const fallback = () => {
+        const list = getStored<any[]>('alfred_people', DEFAULT_PEOPLE);
+        const stress = (payload.mood === 'Stressed' || payload.mood === 'Exhausted') ? 'High' : (payload.mood === 'Neutral') ? 'Medium' : 'Low';
+        const updatedList = list.map(p => p.id === payload.person_id ? { ...p, stress_level: stress } : p);
+        setStored('alfred_people', updatedList);
+
+        const timelines = getStored<Record<string, any[]>>('alfred_people_timeline', DEFAULT_PEOPLE_TIMELINE);
+        const userTimeline = timelines[payload.person_id] || [];
+        const newEvent = {
+          timestamp: new Date().toISOString(),
+          event_type: 'standup',
+          description: `Submitted Check-in: Mood is ${payload.mood}.${payload.blockers ? ' Blocker: ' + payload.blockers : ''}`,
+          linked_entity_id: ''
+        };
+        timelines[payload.person_id] = [newEvent, ...userTimeline];
+        setStored('alfred_people_timeline', timelines);
+
+        const insights = getStored<any>('alfred_people_insights', DEFAULT_PEOPLE_INSIGHTS);
+        insights.checkins_today += 1;
+        if (payload.blockers) {
+          insights.active_blockers += 1;
+        }
+        if (stress === 'High') {
+          insights.high_stress_employees = list.filter(p => p.stress_level === 'High').length;
+        }
+        setStored('alfred_people_insights', insights);
+
+        return { success: true };
+      };
+      return post<any>('/people/checkin', payload, fallback);
+    },
+    getTimeline: async (id: string) => {
+      const timelines = getStored<Record<string, any[]>>('alfred_people_timeline', DEFAULT_PEOPLE_TIMELINE);
+      const fallback = timelines[id] || [];
+      return fetcher<any[]>(`/people/${id}/timeline`, undefined, fallback);
+    },
+    getRecommendations: async (id: string) => {
+      const recs = getStored<Record<string, any>>('alfred_people_recommendations', DEFAULT_PEOPLE_RECOMMENDATIONS);
+      const fallback = recs[id] || {
+        focus_score: 80,
+        collaboration_score: 80,
+        workload_score: 50,
+        knowledge_sharing_score: 80,
+        risk_pattern: 'healthy',
+        working_style: 'Steady Contributor',
+        recommendations: ['Keep doing great work. Workload is balanced and focus remains strong.']
+      };
+      return fetcher<any>(`/people/${id}/recommendations`, undefined, fallback);
+    }
+  },
+  validation: {
+    run: async (scenarioId: number) => {
+      const fallback = {
+        scenario_id: scenarioId,
+        name: "Mock Scenario",
+        steps: [
+          { step: "1. Mock step executed", status: "completed", system: "Local Client", time: "0.1s" }
+        ],
+        risk_score: 10,
+        logs: ["[INFO] running local validation simulator fallback."],
+        timestamp: new Date().toISOString(),
+        audit_event_id: "mock-uuid-xxxxx",
+        audit_trail_recorded: true
+      };
+      return post<any>('/validation/run', { scenario_id: scenarioId }, fallback);
+    },
+    getMetrics: async () => {
+      const fallback = {
+        corporation: "ED Corporation Global",
+        health_score: 94,
+        business_unit_health: [
+          { name: "Automotive", score: 98, status: "nominal" },
+          { name: "Healthcare", score: 95, status: "nominal" },
+          { name: "Banking", score: 89, status: "warning" },
+          { name: "Government", score: 97, status: "nominal" }
+        ],
+        revenue_at_risk_usd: 15000,
+        critical_incidents: 1,
+        employee_engagement_index: 88,
+        vendor_risk_score: 12,
+        compliance_score: 100,
+        ai_automation_success_rate: 91.5,
+        mean_time_to_detect_sec: 42,
+        mean_time_to_recover_min: 14,
+        cloud_spend_monthly_usd: 240500,
+        security_posture: "A+"
+      };
+      return fetcher<any>('/validation/metrics', undefined, fallback);
+    }
   }
 };

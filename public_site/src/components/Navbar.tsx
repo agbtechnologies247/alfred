@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 const NAV_LINKS = [
   { to: '/platform', label: 'Platform' },
   { to: '/decision-engineering', label: 'Decision Engine' },
+  { to: '/sandbox', label: 'Interactive Sandbox' },
   { to: '/templates', label: 'Templates' },
   { to: '/opex', label: 'ROI Guide' },
   { to: '/pricing', label: 'Pricing' },

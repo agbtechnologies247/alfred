@@ -220,7 +220,10 @@ function DeveloperPortal() {
     setPlayLoading(true);
     setPlayResult('');
     try {
-      const url = 'http://localhost:3000' + (playUrl.startsWith('/') ? playUrl : '/' + playUrl);
+      const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3000'
+        : window.location.origin;
+      const url = apiBase + (playUrl.startsWith('/') ? playUrl : '/' + playUrl);
       const opts: RequestInit = { 
         method: playMethod, 
         headers: { 

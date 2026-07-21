@@ -9,6 +9,7 @@ import ApiDocs from './pages/ApiDocs';
 import OpExGuide from './pages/OpExGuide';
 import DeveloperDocs from './pages/DeveloperDocs';
 import Pricing from './pages/Pricing';
+import Sandbox from './pages/Sandbox';
 import './index.css';
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/platform" element={<Platform />} />
           <Route path="/decision-engineering" element={<DecisionEngine />} />
+          <Route path="/sandbox" element={<Sandbox />} />
           <Route path="/templates" element={<Templates />} />
           <Route path="/api-docs" element={<ApiDocs />} />
           <Route path="/opex" element={<OpExGuide />} />

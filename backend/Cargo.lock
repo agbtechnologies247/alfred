@@ -4344,6 +4344,7 @@ name = "workflow-engine"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "automation-engine",
  "event-bus",
  "serde",
  "serde_json",

@@ -11,6 +11,7 @@ pub mod analytics;
 pub mod developer;
 pub mod ontology;
 pub mod people;
+pub mod validation;
 
 use axum::{
     routing::{get, post, delete},
@@ -92,6 +93,12 @@ pub fn api_router(state: AppState) -> Router<AppState> {
         .route("/people", get(people::get_all_people))
         .route("/people/insights", get(people::get_people_insights))
         .route("/people/checkin", post(people::submit_checkin))
+        .route("/people/:id/timeline", get(people::get_person_timeline))
+        .route("/people/:id/recommendations", get(people::get_person_recommendations))
+
+        // === Enterprise Validation ===
+        .route("/validation/run", post(validation::run_validation_scenario))
+        .route("/validation/metrics", get(validation::get_executive_metrics))
 
         .route_layer(middleware::from_fn_with_state(state.clone(), auth::auth_middleware));
 

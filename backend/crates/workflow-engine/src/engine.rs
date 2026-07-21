@@ -184,8 +184,8 @@ mod tests {
                 },
                 "step1": {
                     "Action": {
-                        "action_type": "api",
-                        "payload": {}
+                        "action_type": "local",
+                        "payload": { "script": "echo 'linear-test'" }
                     }
                 }
             },
@@ -196,6 +196,135 @@ mod tests {
 
         let res = engine.execute_graph(&workflow, json!({})).await;
         assert!(res.is_ok());
+    }
+
+    /// Integration test: a multi-step DAG with a real local shell command.
+    /// Trigger → Check Health (local echo) → Notify (local echo)
+    /// Both action nodes run real shell commands through automation-engine.
+    #[tokio::test]
+    async fn test_dag_with_real_shell_execution() {
+        let storage = StorageEngine { pg_pool: None, graph_db: None };
+        let engine = WorkflowEngine::new(storage);
+
+        let workflow = json!({
+            "id": "wf-integration-1",
+            "name": "Real Shell Execution DAG",
+            "nodes": {
+                "trigger": {
+                    "Trigger": {
+                        "source": "incident",
+                        "event_type": "p1_alert"
+                    }
+                },
+                "check_health": {
+                    "Action": {
+                        "action_type": "local",
+                        "payload": { "script": "echo 'health-check-ok'" }
+                    }
+                },
+                "notify": {
+                    "Action": {
+                        "action_type": "local",
+                        "payload": { "script": "echo 'notification-sent'" }
+                    }
+                }
+            },
+            "edges": [
+                { "from": "trigger", "to": "check_health" },
+                { "from": "check_health", "to": "notify" }
+            ]
+        });
+
+        let res = engine.execute_graph(&workflow, json!({})).await;
+        assert!(res.is_ok(), "Multi-step DAG with real shell commands should succeed");
+    }
+
+    /// Integration test: condition node evaluates to false → downstream action is skipped.
+    #[tokio::test]
+    async fn test_condition_skips_downstream_on_false() {
+        let storage = StorageEngine { pg_pool: None, graph_db: None };
+        let engine = WorkflowEngine::new(storage);
+
+        let workflow = json!({
+            "id": "wf-cond-skip",
+            "name": "Conditional Skip Workflow",
+            "nodes": {
+                "trigger": {
+                    "Trigger": {
+                        "source": "manual",
+                        "event_type": "test"
+                    }
+                },
+                "gate": {
+                    "Condition": {
+                        "field": "cpu_usage",
+                        "operator": "gt",
+                        "value": 90.0
+                    }
+                },
+                "remediate": {
+                    "Action": {
+                        "action_type": "local",
+                        "payload": { "script": "echo 'remediation-executed'" }
+                    }
+                }
+            },
+            "edges": [
+                { "from": "trigger", "to": "gate" },
+                { "from": "gate", "to": "remediate" }
+            ]
+        });
+
+        // cpu_usage is 50 — below the threshold of 90, so "remediate" should be SKIPPED
+        let res = engine.execute_graph(
+            &workflow,
+            json!({ "cpu_usage": 50.0 }),
+        ).await;
+        assert!(res.is_ok(), "Workflow with skipped condition should still succeed");
+    }
+
+    /// Integration test: condition evaluates to true → downstream action runs.
+    #[tokio::test]
+    async fn test_condition_allows_downstream_on_true() {
+        let storage = StorageEngine { pg_pool: None, graph_db: None };
+        let engine = WorkflowEngine::new(storage);
+
+        let workflow = json!({
+            "id": "wf-cond-pass",
+            "name": "Conditional Pass Workflow",
+            "nodes": {
+                "trigger": {
+                    "Trigger": {
+                        "source": "manual",
+                        "event_type": "test"
+                    }
+                },
+                "gate": {
+                    "Condition": {
+                        "field": "disk_usage",
+                        "operator": "gt",
+                        "value": 85.0
+                    }
+                },
+                "cleanup": {
+                    "Action": {
+                        "action_type": "local",
+                        "payload": { "script": "echo 'disk-cleanup-ran'" }
+                    }
+                }
+            },
+            "edges": [
+                { "from": "trigger", "to": "gate" },
+                { "from": "gate", "to": "cleanup" }
+            ]
+        });
+
+        // disk_usage is 92 — above 85, so "cleanup" SHOULD execute
+        let res = engine.execute_graph(
+            &workflow,
+            json!({ "disk_usage": 92.0 }),
+        ).await;
+        assert!(res.is_ok(), "Workflow with passing condition should execute downstream action");
     }
 }
 

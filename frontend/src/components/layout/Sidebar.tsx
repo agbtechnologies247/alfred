@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import {
   LayoutDashboard, Activity, AlertTriangle, BrainCircuit, BookOpen,
   Zap, Bot, BarChart3, FileText, Settings, Package, Shield,
-  GitBranch, Network, Code, HelpCircle, Users,
+  GitBranch, Network, Code, HelpCircle, Users, ShieldAlert,
 } from 'lucide-react';
 
 const NAV_GROUPS = [
@@ -23,6 +23,7 @@ const NAV_GROUPS = [
       { name: 'AI Agents', to: '/agents', icon: Bot },
       { name: 'Automation', to: '/automation', icon: Zap },
       { name: 'Templates', to: '/templates', icon: GitBranch },
+      { name: 'Validation Scenario', to: '/validation', icon: ShieldAlert },
     ],
   },
   {
@@ -49,9 +50,11 @@ export function Sidebar() {
     <aside className="w-60 border-r border-border bg-background flex flex-col h-full overflow-y-auto">
       {/* Logo */}
       <div className="p-4 border-b border-border flex items-center gap-2.5 shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
-          A
-        </div>
+        <img
+          src="/alfred-logo.png"
+          alt="A.L.F.R.E.D. Logo"
+          className="w-8 h-8 object-contain rounded-md"
+        />
         <div>
           <span className="font-bold text-sm tracking-widest text-primary">A.L.F.R.E.D.</span>
           <div className="text-[10px] text-muted-foreground leading-none">Decision Platform</div>

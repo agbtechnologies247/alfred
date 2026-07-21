@@ -222,6 +222,9 @@ export default function Home() {
             <button className="btn btn-primary" style={{ padding: '16px 32px', fontSize: '1.05rem' }} onClick={() => window.location.href = '/app/'}>
               Launch Console <ArrowRight size={18} style={{ marginLeft: '10px' }}/>
             </button>
+            <a href="/sandbox" className="btn btn-outline" style={{ padding: '16px 32px', fontSize: '1.05rem', borderColor: 'var(--accent-cyan)', color: 'var(--accent-cyan)', boxShadow: '0 0 15px rgba(6,182,212,0.15)' }}>
+              Try Live Sandbox <Zap size={14} style={{ marginLeft: '8px' }} />
+            </a>
             <a href="/pricing" className="btn btn-outline" style={{ padding: '16px 32px', fontSize: '1.05rem' }}>
               View Pricing
             </a>
@@ -435,6 +438,73 @@ export default function Home() {
                 })}
               </div>
 
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SIAM Multi-Vendor Governance Section */}
+      <section className="section container" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '80px', paddingBottom: '40px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '50px' }}>
+          <span style={{ display: 'inline-block', background: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.3)', borderRadius: '20px', padding: '6px 16px', fontSize: '0.8rem', color: 'var(--accent-cyan)', marginBottom: '20px', fontWeight: 600 }}>
+            SIAM GOVERNANCE MODEL
+          </span>
+          <h2>Autonomous Multi-Vendor Coordination</h2>
+          <p style={{ color: 'var(--text-muted)', maxWidth: '800px', margin: '0 auto', fontSize: '1.05rem' }}>
+            Large enterprises operate under the Service Integration and Management (SIAM) model. A.L.F.R.E.D. acts as the central intelligence hub, orchestrating workflows across internal IT departments and external MSP vendor partners.
+          </p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '40px', alignItems: 'center' }} className="flow-grid">
+          {/* Visual Topology Diagram */}
+          <div className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px', background: 'rgba(7, 7, 13, 0.5)' }}>
+            <h4 style={{ fontSize: '0.9rem', color: 'var(--accent-red)', textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '10px', margin: 0 }}>
+              Multi-Provider Operating Model
+            </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontFamily: 'monospace', fontSize: '0.78rem' }}>
+              <div style={{ padding: '10px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', background: 'rgba(255,255,255,0.02)', textAlign: 'center', color: '#fff', fontWeight: 800 }}>
+                Enterprise Service Governance (Executive Board)
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', color: 'var(--text-muted)' }}>↓</div>
+              <div style={{ padding: '10px', border: '1px solid var(--accent-red)', borderRadius: '6px', background: 'rgba(225,29,72,0.06)', textAlign: 'center', color: 'var(--accent-red)', fontWeight: 800 }}>
+                A.L.F.R.E.D. Autonomous Service Operating System
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', color: 'var(--text-muted)' }}>↓</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                <div style={{ padding: '8px', border: '1px solid rgba(6,182,212,0.3)', borderRadius: '6px', background: 'rgba(6,182,212,0.02)', textAlign: 'center', color: 'var(--accent-cyan)', fontSize: '0.7rem' }}>
+                  Internal IT (L1-L3 Support)
+                </div>
+                <div style={{ padding: '8px', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '6px', background: 'rgba(139,92,246,0.02)', textAlign: 'center', color: 'var(--accent-purple)', fontSize: '0.7rem' }}>
+                  MSP Partner A (Cloud Ops)
+                </div>
+                <div style={{ padding: '8px', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '6px', background: 'rgba(245,158,11,0.02)', textAlign: 'center', color: '#f59e0b', fontSize: '0.7rem' }}>
+                  MSP Partner B (Security SOC)
+                </div>
+              </div>
+            </div>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.45, margin: 0 }}>
+              Whether an outage is caused by an internal database deadlock or an external cloud partner network issue, A.L.F.R.E.D. correlates dependencies and routes alerts instantly.
+            </p>
+          </div>
+
+          {/* Details */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', textAlign: 'left' }}>
+            <div className="glass-panel" style={{ padding: '20px 24px' }}>
+              <h4 style={{ fontSize: '1rem', color: '#fff', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <Activity size={16} style={{ color: 'var(--accent-cyan)' }} /> Cross-Service Coordination
+              </h4>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '6px 0 0 0', lineHeight: 1.5 }}>
+                Coordinates multi-provider incidents automatically. Triggers joint triage sessions, synchronizes alerts across ServiceNow/Jira, and logs SLA breaches on behalf of the customer.
+              </p>
+            </div>
+
+            <div className="glass-panel" style={{ padding: '20px 24px' }}>
+              <h4 style={{ fontSize: '1rem', color: '#fff', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <Shield size={16} style={{ color: 'var(--accent-purple)' }} /> Automated Compliance & Audits
+              </h4>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '6px 0 0 0', lineHeight: 1.5 }}>
+                Ensures compliance standards (ISO 20000, ITIL 4, COBIT, NIST, SOC 2) are automatically validated. Generates ledger updates for every automated resolution.
+              </p>
             </div>
           </div>
         </div>

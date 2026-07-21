@@ -6,6 +6,12 @@ export function Topbar() {
   const navigate = useNavigate();
   return (
     <header className="h-14 border-b border-border bg-background flex items-center justify-between px-4">
+      {/* Brand logo & name on top */}
+      <div className="flex items-center gap-2.5 mr-6 shrink-0">
+        <img src="/alfred-logo.png" alt="A.L.F.R.E.D. Logo" className="w-6 h-6 object-contain" />
+        <span className="font-extrabold text-sm tracking-wide text-foreground">A.L.F.R.E.D.</span>
+      </div>
+
       {/* Left section - Search */}
       <div className="flex-1 max-w-md">
         <Button variant="outline" className="w-full justify-start text-muted-foreground h-9 relative">

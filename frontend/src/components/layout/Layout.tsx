@@ -13,6 +13,7 @@ export function Layout() {
 
   useEffect(() => {
     setToken(localStorage.getItem('alfred_token'));
+    document.title = 'A.L.F.R.E.D. - Enterprise Operations Center';
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -61,9 +62,11 @@ export function Layout() {
           
           {/* Brand/Logo Header */}
           <div className="flex flex-col items-center gap-3 text-center">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-black text-xl shadow-lg shadow-primary/20 ring-1 ring-white/10">
-              A
-            </div>
+            <img
+              src="/alfred-logo.png"
+              alt="A.L.F.R.E.D. Logo"
+              className="w-20 h-20 object-contain drop-shadow-[0_0_15px_rgba(244,63,94,0.3)]"
+            />
             <div>
               <h1 className="text-2xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-400">
                 A.L.F.R.E.D.
