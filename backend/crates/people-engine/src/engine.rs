@@ -323,12 +323,12 @@ impl PeopleEngine {
 
         // Mock data
         vec![
-            serde_json::json!({"id": "p-001", "name": "Alice Brown", "email": "alice@agbtech.com", "role": "Senior SRE", "department": "Engineering", "status": "active", "team": "Platform", "mood": "good", "focus_score": 82}),
-            serde_json::json!({"id": "p-002", "name": "Rahul Sharma", "email": "rahul@agbtech.com", "role": "DevOps Lead", "department": "Engineering", "status": "active", "team": "DevOps", "mood": "stressed", "focus_score": 55}),
-            serde_json::json!({"id": "p-003", "name": "Priya Patel", "email": "priya@agbtech.com", "role": "QA Engineer", "department": "Quality", "status": "active", "team": "QA", "mood": "neutral", "focus_score": 74}),
-            serde_json::json!({"id": "p-004", "name": "James Wilson", "email": "james@agbtech.com", "role": "Backend Engineer", "department": "Engineering", "status": "active", "team": "Platform", "mood": "good", "focus_score": 91}),
-            serde_json::json!({"id": "p-005", "name": "Sarah Chen", "email": "sarah@agbtech.com", "role": "Security Analyst", "department": "Security", "status": "active", "team": "Security", "mood": "great", "focus_score": 88}),
-            serde_json::json!({"id": "p-006", "name": "Bhramit Pardhi", "email": "bhramit@agbtech.com", "role": "CTO", "department": "Executive", "status": "active", "team": "Leadership", "mood": "good", "focus_score": 70}),
+            serde_json::json!({"id": "11111111-1111-1111-1111-111111111111", "name": "Alice Brown", "email": "alice@agbtech.com", "role": "Senior SRE", "department": "Engineering", "status": "active", "team": "Platform", "mood": "good", "focus_score": 82}),
+            serde_json::json!({"id": "22222222-2222-2222-2222-222222222222", "name": "Rahul Sharma", "email": "rahul@agbtech.com", "role": "DevOps Lead", "department": "Engineering", "status": "active", "team": "DevOps", "mood": "stressed", "focus_score": 55}),
+            serde_json::json!({"id": "33333333-3333-3333-3333-333333333333", "name": "Priya Patel", "email": "priya@agbtech.com", "role": "QA Engineer", "department": "Quality", "status": "active", "team": "QA", "mood": "neutral", "focus_score": 74}),
+            serde_json::json!({"id": "44444444-4444-4444-4444-444444444444", "name": "James Wilson", "email": "james@agbtech.com", "role": "Backend Engineer", "department": "Engineering", "status": "active", "team": "Platform", "mood": "good", "focus_score": 91}),
+            serde_json::json!({"id": "55555555-5555-5555-5555-555555555555", "name": "Sarah Chen", "email": "sarah@agbtech.com", "role": "Security Analyst", "department": "Security", "status": "active", "team": "Security", "mood": "great", "focus_score": 88}),
+            serde_json::json!({"id": "66666666-6666-6666-6666-666666666666", "name": "Bhramit Pardhi", "email": "bhramit@agbtech.com", "role": "CTO", "department": "Executive", "status": "active", "team": "Leadership", "mood": "good", "focus_score": 70}),
         ]
     }
 
