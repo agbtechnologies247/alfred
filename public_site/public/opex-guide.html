@@ -399,7 +399,9 @@ Response: { risk_score, affected_customers, estimated_downtime_minutes, alternat
 
 <!-- ══ DATA LOADING & RENDERING ═══════════════════════════════════════════ -->
 <script>
-const API = 'http://localhost:3000';
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:3000'
+  : window.location.origin;
 const fmt = (n) => new Intl.NumberFormat('en-US').format(Math.round(n));
 const fmtUSD = (n) => '$' + new Intl.NumberFormat('en-US').format(Math.round(n));
 
