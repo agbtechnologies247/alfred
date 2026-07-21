@@ -512,7 +512,7 @@ pub async fn run_validation_scenario(
     };
 
     // Log the event to DB if pool is available
-    if let Some(pg) = &state.storage.pg_pool {
+    if state.storage.pg_pool.is_some() {
         let _ = state.storage.log_unified_event(&db_event).await;
     }
 

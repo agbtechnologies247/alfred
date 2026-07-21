@@ -1,7 +1,6 @@
 use crate::routes::auth::{require_permission, AuthenticatedUser};
 use crate::AppState;
 use axum::{extract::State, Json};
-use event_bus::AlfredEvent;
 use serde_json::{json, Value};
 
 pub async fn get_api_keys(

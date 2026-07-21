@@ -152,9 +152,9 @@ async fn main() {
     );
 
     // Setup CORS
-    use axum::http::{HeaderValue, Method};
+    use axum::http::Method;
     let cors = CorsLayer::new()
-        .allow_origin("http://localhost:5174".parse::<HeaderValue>().unwrap())
+        .allow_origin(tower_http::cors::Any)
         .allow_methods(vec![
             Method::GET,
             Method::POST,
