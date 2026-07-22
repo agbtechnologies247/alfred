@@ -54,18 +54,20 @@ function GovernanceDashboard() {
       <div>
         <h2 className="text-lg font-semibold mb-4">RBAC Role Matrix</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {roles?.map((role: any) => {
-            const color = ROLE_COLORS[role.role] || '#64748b';
+          {(Array.isArray(roles) ? roles : []).map((role: any, idx: number) => {
+            const roleKey = String(role?.role || role?.name || role?.id || `role_${idx}`);
+            const color = ROLE_COLORS[roleKey] || '#64748b';
+            const permissions = Array.isArray(role?.permissions) ? role.permissions : [];
             return (
-              <div key={role.role} className="p-5 rounded-xl border border-border bg-card">
+              <div key={roleKey + idx} className="p-5 rounded-xl border border-border bg-card">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
-                  <h3 className="font-bold capitalize text-sm">{role.role.replace(/_/g, ' ')}</h3>
+                  <h3 className="font-bold capitalize text-sm">{roleKey.replace(/_/g, ' ')}</h3>
                   <ChevronRight className="w-3.5 h-3.5 text-muted-foreground ml-auto" />
                 </div>
-                <p className="text-xs text-muted-foreground mb-3">{role.description}</p>
+                <p className="text-xs text-muted-foreground mb-3">{role?.description || 'Access Control Role'}</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {role.permissions.map((p: string) => (
+                  {permissions.map((p: string) => (
                     <span key={p} className="text-[11px] px-2 py-0.5 rounded-full bg-muted/50 border border-border text-muted-foreground flex items-center gap-1">
                       <CheckCircle className="w-2.5 h-2.5 text-emerald-400" />
                       {p}
@@ -85,40 +87,46 @@ function GovernanceDashboard() {
           <span className="ml-2 text-xs font-normal text-muted-foreground">— every action recorded permanently</span>
         </h2>
         <div className="rounded-xl border border-border overflow-hidden">
-          {audit?.entries && audit.entries.length > 0 ? (
-            <table className="w-full text-sm">
-              <thead className="bg-muted/30 border-b border-border">
-                <tr>
-                  {['Timestamp', 'User', 'Role', 'Action', 'Resource', 'Outcome', 'Risk'].map(h => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {audit.entries.map((entry: any, i: number) => (
-                  <tr key={i} className="border-b border-border/50 hover:bg-muted/10 transition-colors">
-                    <td className="px-4 py-3 text-xs font-mono text-muted-foreground">{entry.timestamp}</td>
-                    <td className="px-4 py-3 text-xs">{entry.user_id}</td>
-                    <td className="px-4 py-3 text-xs capitalize">{entry.user_role}</td>
-                    <td className="px-4 py-3 text-xs font-medium">{entry.action}</td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">{entry.resource}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs font-bold ${entry.outcome === 'success' ? 'text-emerald-400' : 'text-red-400'}`}>{entry.outcome}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${entry.risk_level === 'high' ? 'bg-red-500/10 text-red-400' : 'bg-muted text-muted-foreground'}`}>{entry.risk_level}</span>
-                    </td>
+          {(() => {
+            const auditList = Array.isArray(audit?.entries) ? audit.entries : Array.isArray(audit) ? audit : [];
+            if (auditList.length === 0) {
+              return (
+                <div className="p-12 text-center text-muted-foreground">
+                  <Shield className="w-8 h-8 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">No audit entries yet. Actions taken through A.L.F.R.E.D. will appear here.</p>
+                  <p className="text-xs mt-1">Approve or reject a decision to generate your first audit entry.</p>
+                </div>
+              );
+            }
+            return (
+              <table className="w-full text-sm">
+                <thead className="bg-muted/30 border-b border-border">
+                  <tr>
+                    {['Timestamp', 'User', 'Role', 'Action', 'Resource', 'Outcome', 'Risk'].map(h => (
+                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="p-12 text-center text-muted-foreground">
-              <Shield className="w-8 h-8 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">No audit entries yet. Actions taken through A.L.F.R.E.D. will appear here.</p>
-              <p className="text-xs mt-1">Approve or reject a decision to generate your first audit entry.</p>
-            </div>
-          )}
+                </thead>
+                <tbody>
+                  {auditList.map((entry: any, i: number) => (
+                    <tr key={i} className="border-b border-border/50 hover:bg-muted/10 transition-colors">
+                      <td className="px-4 py-3 text-xs font-mono text-muted-foreground">{entry.timestamp || 'Now'}</td>
+                      <td className="px-4 py-3 text-xs">{entry.user_id || entry.user || 'admin'}</td>
+                      <td className="px-4 py-3 text-xs capitalize">{entry.user_role || entry.role || 'super_admin'}</td>
+                      <td className="px-4 py-3 text-xs font-medium">{entry.action || 'ACCESS'}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{entry.resource || 'system'}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs font-bold ${String(entry.outcome).toLowerCase().includes('succ') ? 'text-emerald-400' : 'text-red-400'}`}>{entry.outcome || 'success'}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${String(entry.risk_level).toLowerCase() === 'high' ? 'bg-red-500/10 text-red-400' : 'bg-muted text-muted-foreground'}`}>{entry.risk_level || 'low'}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            );
+          })()}
         </div>
       </div>
 

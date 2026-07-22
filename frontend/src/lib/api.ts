@@ -717,16 +717,22 @@ export const api = {
   },
   governance: {
     getAuditLog: () => {
-      const fallback = [
-        { id: "audit-101", user: "admin@agb.com", action: "POLICY_UPDATE", resource: "sys-config", outcome: "SUCCESS", timestamp: new Date().toLocaleTimeString(), risk_level: "LOW" },
-        { id: "audit-102", user: "sre-agent", action: "CONTAINER_RESTART", resource: "billsoft-backend", outcome: "SUCCESS", timestamp: new Date(Date.now() - 300000).toLocaleTimeString(), risk_level: "LOW" }
-      ];
+      const fallback = {
+        total: 2,
+        entries: [
+          { id: "audit-101", user_id: "admin@agb.com", user_role: "super_admin", action: "POLICY_UPDATE", resource: "sys-config", outcome: "success", timestamp: new Date().toLocaleTimeString(), risk_level: "low" },
+          { id: "audit-102", user_id: "sre-agent", user_role: "ai_only", action: "CONTAINER_RESTART", resource: "billsoft-backend", outcome: "success", timestamp: new Date(Date.now() - 300000).toLocaleTimeString(), risk_level: "low" }
+        ]
+      };
       return fetcher<any>('/governance/audit', undefined, fallback);
     },
     getRoles: () => {
       const fallback = [
-        { id: "role-1", name: "SuperAdmin", permissions: ["all"] },
-        { id: "role-2", name: "SRE Operator", permissions: ["incidents:write", "sops:approve"] }
+        { role: "super_admin", description: "Full platform access", permissions: ["all"] },
+        { role: "tenant_admin", description: "Full tenant access", permissions: ["incidents", "workflows", "marketplace", "settings", "audit"] },
+        { role: "sr_engineer", description: "Can approve high-risk actions", permissions: ["incidents", "workflows", "decisions", "cloud"] },
+        { role: "engineer", description: "Can create and execute workflows", permissions: ["incidents", "workflows"] },
+        { role: "read_only", description: "View-only access", permissions: ["incidents.read", "audit.read"] }
       ];
       return fetcher<any[]>('/governance/roles', undefined, fallback);
     },
